@@ -1,0 +1,7 @@
+pointcut n(Node i) {
+	i = .. [..];
+}
+
+advice fn: insert n(Node i) {
+	i [shape=box];
+}

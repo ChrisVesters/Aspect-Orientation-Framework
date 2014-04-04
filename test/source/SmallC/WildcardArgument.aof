@@ -1,0 +1,7 @@
+pointcut p() {
+	execute int mySquare(..);
+}
+
+advice a: before p() {
+	printf("Advice A\n");
+}

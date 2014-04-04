@@ -1,0 +1,6 @@
+pointcut p(int x) {
+	call int mySqrt(int x, ..);
+}
+
+advice a: before p(int x) {
+}

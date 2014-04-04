@@ -1,0 +1,13 @@
+pointcut p() {
+	execute void main();
+}
+
+pointcut q(int i) {
+	call int random(int i);
+}
+
+advice c: around p() {
+	printf("BEGIN C!\n");
+	proceed();
+	printf("END C!\n");
+}

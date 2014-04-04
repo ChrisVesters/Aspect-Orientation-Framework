@@ -1,0 +1,16 @@
+pointcut p() {
+	execute int mySquare(int);
+	call int mySqrt(int);
+	call int myPow(int, int);
+}
+
+advice c: before p() {
+	printf("BEGIN C!\n");
+}
+
+advice a: around p() {
+	int result = 0;
+	printf("BEGIN A!\n");
+	result = proceed();
+	printf("END A!\n");
+}

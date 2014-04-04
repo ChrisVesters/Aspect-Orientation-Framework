@@ -1,0 +1,7 @@
+pointcut n() {
+	none [..];
+}
+
+advice fn: insert n() {
+	init [shape=box];
+}

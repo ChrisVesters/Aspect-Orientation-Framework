@@ -1,0 +1,7 @@
+pointcut n() {
+	start [..];
+}
+
+advice fn: delete n() {
+	main [color=..];
+}

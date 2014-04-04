@@ -1,0 +1,7 @@
+pointcut n(Edge i) {
+	i = (.. [..]) -> (.. [..]) [..];
+}
+
+advice fn: delete n(Edge i) {
+	i [color=..];
+}

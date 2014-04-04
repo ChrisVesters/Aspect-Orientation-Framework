@@ -1,0 +1,19 @@
+pointcut p() {
+	execute .. mySquare(int);
+}
+
+pointcut q(int i) {
+	call int random(int i);
+}
+
+advice a: after p() {
+	printf("Advice A\n");
+}
+
+advice c: around q(int i) {
+	int retVal = 0;	
+	printf("BEGIN C!\n");
+	retVal = proceed(i);
+	printf("END C!\n");
+	return retVal;
+}

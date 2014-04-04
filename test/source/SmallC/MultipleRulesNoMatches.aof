@@ -1,0 +1,9 @@
+pointcut p() {
+	execute int mySquare();
+	call int mySqrt();
+	call int myPow();
+}
+
+advice c: before p() {
+	printf("BEGIN C!\n");
+}

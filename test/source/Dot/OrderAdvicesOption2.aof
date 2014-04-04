@@ -1,0 +1,13 @@
+order{fn; dn}
+
+pointcut n(Node i) {
+	i = .. [..];
+}
+
+advice dn: delete n(Node i) {
+	i [color=..];
+}
+
+advice fn: insert n(Node i) {
+	i [color="0.000 1.000 1.000"];
+}
