@@ -1,0 +1,857 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%  IDENTIFICATION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ProvidesPackage{thesis}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%   SETUP MACROS AND SWITCHES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\@title{}
+\def\@author{}
+
+\def\titlepageblurb#1{\gdef\@titlepageblurb{#1}}
+\def\principaladvisor#1{\gdef\@principaladvisor{#1}}
+\def\@principaladvisor{*}
+\def\coprincipaladvisor#1{\gdef\@coprincipaladvisor{#1}}
+\def\@coprincipaladvisor{*}
+\def\assistantadvisor#1{\gdef\@assistantadvisor{#1}}
+\def\@assistantadvisor{*}
+\def\submitdate#1{\gdef\@submitdate{#1}}
+\def\copyrightyear#1{\gdef\@copyrightyear{#1}} 
+\def\@copyrightyear{\number\the\year}
+\def\reportnumber#1{\gdef\@reportnumber{#1}}
+%\def\tocdepthvalue#1{\gdef\@tocdepthvalue{#1}}
+%\def\secnumdepthvalue#1{\gdef\@secnumdepthvalue{#1}}
+\def\@tocdepthvalue{}
+\def\@secnumdepthvalue{}
+
+\def\bibfile#1{\gdef\@bibfile{#1}}
+
+\newif\ifw@ntsignature
+\newif\ifw@ntcopyright
+\newif\ifw@nttableofcontents
+\newif\ifw@ntlistoffigures
+\newif\ifw@ntlistoftables
+\newif\ifw@ntbibliography
+\newif\ifw@ntindex
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%  OPTION DECLARATION PART
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%-------------------
+%%%%  ENGLISH OPTION
+%-------------------
+\DeclareOption{english}{%
+		\PassOptionsToPackage{english}{babel}
+		%
+		\def\@submitdate{%
+				\ifcase\the\month\or
+				January\or February\or March\or April\or May\or June\or
+				July\or August\or September\or October\or November\or December\fi
+				\space \number\the\year
+		}
+		%
+		\def\@phddegree{Doctor}
+		%
+		\def\@masterdegree{Master}
+		%
+		\def\@bachelordegree{Bachelor}
+		%
+		\def\@advisorname{Principal Advisor}
+		%
+		\def\@coadvisorname{Principal Co-Advisor}
+		%
+		\def\@assistantadvisorname{Assistant Advisor}
+		%
+		\def\@dissertationblurb{
+		   	Dissertation Submitted in \@submitdate\ to the\\
+		   	Department of Mathematics and Computer Science\\
+		   	of the Faculty of Sciences, University of Antwerp,\\
+		   	in Partial Fulfillment of the Requirements\\
+		   	for the Degree of \@thesisdegree\ of Science.
+		}
+		%
+		\def\@techreportblurb{
+		   	Technical Report \@reportnumber , submitted \@submitdate . \\
+		   	Department of Mathematics and Computer Science\\
+		   	of the Faculty of Sciences, University of Antwerp.
+		}
+		%
+		\def\@advisorsblurb{%
+				\if*\@principaladvisor \else
+		  			{\@advisorname: \@principaladvisor} \\
+		  	\fi
+		  	\if*\@coprincipaladvisor \else
+		  			{\@coadvisorname : \@coprincipaladvisor}\\
+		  	\fi
+		  	\if*\@assistantadvisor \else
+		  			{\@assistantadvisorname : \@assistantadvisor}\\
+		  	\fi
+		}
+		%
+		\def\@courseblurb{
+		   	\@coursedegree\ of Computer Science curriculum,\\
+		   	Faculty of Sciences, University of Antwerp.\\
+		   	Course notes for academic year \@submitdate.
+		}
+		%
+		\def\@researchgroupblurb{%
+				Formal Techniques\\in Software Engineering
+		}
+		%
+		\def\@signatureblurb{%
+				I certify that I have read this dissertation and that, 
+    		in my opinion, it is fully adequate in scope and quality as a 
+        dissertation for the degree of \@thesisdegree.
+		}
+		%
+		\def\@copyrightblurb{%
+				All rights reserved.
+		}
+}
+
+%-----------------
+%%%%  DUTCH OPTION
+%-----------------
+\DeclareOption{dutch}{%
+		\PassOptionsToPackage{dutch}{babel}
+		%
+		\def\@submitdate{%
+				\ifcase\the\month\or
+				Januari\or Februari\or Maart\or April\or Mei\or Juni\or
+				Juli\or Augustus\or September\or Oktober\or November\or December\fi
+				\space \number\the\year
+		}
+		%
+		\def\@phddegree{Doctor}
+		%
+		\def\@masterdegree{Master}
+		%
+		\def\@bachelordegree{Bachelor}
+		%
+		\def\@advisorname{Promotor}
+		%
+		\def\@coadvisorname{Co-Promotor}
+		%
+		\def\@assistantadvisorname{Begeleider}
+		%
+		\def\@dissertationblurb{
+		   	Thesis ingediend in \@submitdate\ bij het\\
+		   	Departement Wiskunde en Informatica van de\\
+		   	Faculteit Wetenschappen, Universiteit of Antwerpen,\\
+		   	ter vervulling van de vereisten voor het bekomen\\
+		   	van het Diploma van \@thesisdegree\ in de Wetenschappen.
+		   	\newline
+		}
+		%
+		\def\@advisorsblurb{%
+				\if*\@principaladvisor \else
+		  			{\@advisorname: \@principaladvisor} \\
+		  	\fi
+		  	\if*\@coprincipaladvisor \else
+		  			{\@coadvisorname : \@coprincipaladvisor}\\
+		  	\fi
+		  	\if*\@assistantadvisor \else
+		  			{\@assistantadvisorname : \@assistantadvisor}\\
+		  	\fi
+		}
+		%
+		\def\@courseblurb{
+		   	Opleiding \@coursedegree\ of Science in Informatica, van de\\
+		   	Faculteit Wetenschappen, Universiteit Antwerpen.\\
+		   	Nota's bij de cursus voor academiejaar \@submitdate.
+		   	\newline
+		}
+		%
+		\def\@researchgroupblurb{% 
+				Formal Techniques\\in Software Engineering
+		}
+		%
+		\def\@signatureblurb{%
+				Ik verklaar dat ik deze thesis heb gelezen en dat, naar mijn
+				mening, het werk in draagwijdte en kwaliteit beantwoordt
+				aan de vereisten voor een thesis voor het diploma van  
+    	  \@thesisdegree.
+		}
+		%
+		\def\@copyrightblurb{%
+				Alle rechten voorbehouden.
+		}
+}
+
+
+%---------------------
+%%%%  PHDTHESIS OPTION
+%---------------------
+\DeclareOption{phdthesis}{%
+   	\def\@thesisdegree{\@phddegree}
+   	\def\@titlepageblurb{\@dissertationblurb}
+   	\w@ntcopyrighttrue
+   	\w@ntsignaturetrue
+   	\w@nttableofcontentstrue
+   	\def\@tocdepthvalue{2}
+   	\w@nttableofcontentstrue
+   	\w@ntlistoffigurestrue		
+   	\w@ntlistoftablestrue
+   	%	
+   	\def\@secnumdepthvalue{2}
+   	%
+   	\w@ntbibliographytrue
+   	\w@ntindextrue		
+}
+
+
+%------------------------
+%%%%  MASTERTHESIS OPTION
+%------------------------
+\DeclareOption{masterthesis}{%
+   	\def\@thesisdegree{\@masterdegree}
+   	\def\@titlepageblurb{\@dissertationblurb}
+   	\w@ntcopyrightfalse
+   	\w@ntsignaturetrue
+   	\w@nttableofcontentstrue
+   	\def\@tocdepthvalue{3}
+   	\w@ntlistoffigurestrue		
+   	\w@ntlistoftablesfalse		
+   	%	
+   	\def\@secnumdepthvalue{3}
+   	%
+   	\w@ntbibliographytrue
+   	\w@ntindexfalse		
+}
+
+
+%--------------------------
+%%%%  BACHELORTHESIS OPTION
+%--------------------------
+\DeclareOption{bachelorthesis}{%
+   	\def\@thesisdegree{\@bachelordegree}
+   	\def\@titlepageblurb{\@dissertationblurb}
+   	\w@ntsopyrightfalse
+   	\w@ntsignaturefalse
+   	\w@nttableofcontentstrue
+   	\def\@tocdepthvalue{1}
+   	\w@ntlistoffiguresfalse		
+   	\w@ntlistofoablesfalse		
+   	%	
+   	\def\@secnumdepthvalue{2}
+   	%
+   	\w@ntbibliographytrue
+   	\w@ntindexfalse		
+}
+
+%------------------------
+%%%%  MASTERCOURSE OPTION
+%------------------------
+\DeclareOption{mastercourse}{%
+   	\def\@coursedegree{\@masterdegree}
+   	\def\@titlepageblurb{\@courseblurb}
+   	\w@ntcopyrightfalse
+   	\w@ntsignaturefalse
+   	\w@nttableofcontentstrue
+   	\def\@tocdepthvalue{1}
+   	\w@ntlistoffiguresfalse		
+   	\w@ntlistoftablesfalse
+   	%	
+   	\def\@secnumdepthvalue{2}
+   	%
+   	\w@ntbibliographytrue
+   	\w@ntindexfalse		
+}
+
+%--------------------------
+%%%%  BACHELORCOURSE OPTION
+%--------------------------
+\DeclareOption{bachelorcourse}{%
+   	\def\@coursedegree{\@bachelordegree}
+   	\def\@titlepageblurb{\@courseblurb}
+   	\w@nttableofcontentstrue
+   	\w@ntcopyrightfalse
+   	\w@ntsignaturefalse
+   	\def\@tocdepthvalue{1}
+   	\w@ntlistoffiguresfalse		
+   	\w@ntlistoftablesfalse
+   	%	
+   	\def\@secnumdepthvalue{2}
+   	%
+   	\w@ntbibliographytrue
+   	\w@ntindexfalse		
+}
+
+%----------------------
+%%%%  TECHREPORT OPTION
+%----------------------
+\DeclareOption{techreport}{%
+   	\def\@titlepageblurb{\@techreportblurb}
+   	\w@nttableofcontentstrue
+   	\w@ntcopyrightfalse
+   	\w@ntsignaturefalse
+   	\def\@tocdepthvalue{1}
+   	\w@ntlistoffiguresfalse		
+   	\w@ntlistoftablesfalse
+   	%	
+   	\def\@secnumdepthvalue{2}
+   	%
+   	\w@ntbibliographytrue
+   	\w@ntindexfalse		
+}
+
+%-------------------
+%%%%  GENERIC OPTION
+%-------------------
+\DeclareOption{generic}{%
+   	\def\@titlepageblurb{}
+   	\w@nttableofcontentsfalse
+   	\w@ntcopyrightfalse
+   	\w@ntsignaturefalse
+   	\def\@tocdepthvalue{1}
+   	\w@ntlistoffiguresfalse		
+   	\w@ntlistoftablesfalse
+   	%	
+   	\def\@secnumdepthvalue{2}
+   	%
+   	\w@ntbibliographytrue
+   	\w@ntindexfalse		
+}
+
+%---------------------------------
+%%%%  COPYRIGHT/NOCOPYRIGHT OPTION
+%---------------------------------
+\DeclareOption{copyright}{%
+		\w@ntcopyrighttrue
+}
+
+\DeclareOption{nocopyright}{%
+		\w@ntcopyrightfalse
+}
+
+%---------------------------------
+%%%%  SIGNATURE/NOSIGNATURE OPTION
+%---------------------------------
+\DeclareOption{signature}{%
+		\w@ntsignaturetrue
+}
+
+\DeclareOption{nosignature}{%
+		\w@ntsignaturefalse
+}
+
+%---------------------------------
+%%%%  TABLEOFCONTENTS/NOTABLEOFCONTENTS OPTION
+%---------------------------------
+\DeclareOption{tableofcontents}{%
+		\w@nttableofcontentstrue
+}
+
+\DeclareOption{notableofcontents}{%
+		\w@nttableofcontentsfalse
+}
+
+%-----------------------------------------
+%%%%  LISTOFFIGURES/NOLISTOFFIGURES OPTION
+%-----------------------------------------
+\DeclareOption{listoffigures}{%
+		\w@ntlistoffigurestrue
+}
+
+\DeclareOption{nolistoffigures}{%
+		\w@ntlistoffiguresfalse
+}
+
+
+%---------------------------------------
+%%%%  LISTOFTABLES/NOLISTOFTABLES OPTION
+%---------------------------------------
+\DeclareOption{listoftables}{%
+		\w@ntlistoftablestrue
+}
+
+\DeclareOption{nolistoftables}{%
+		\w@ntlistoftablesfalse
+}
+
+%---------------------------------------
+%%%%  BIBLIOGRAPHY/NOBIBLIOGRAPHY OPTION
+%---------------------------------------
+\DeclareOption{bibliograpy}{%
+		\w@ntbibliographytrue
+}
+
+\DeclareOption{nobibliography}{%
+		\w@ntbibliographyfalse
+}
+
+%-------------------------
+%%%%  INDEX/NOINDEX OPTION
+%-------------------------
+\DeclareOption{index}{%
+		\makeindex
+		\w@ntindextrue
+}
+
+\DeclareOption{noindex}{%
+		\w@ntindexfalse
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%  EXECUTION OF OPTIONS PART
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ExecuteOptions{phdthesis,english}
+\ProcessOptions
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%  PACKAGE LOADING PART
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\RequirePackage{graphicx}
+%\RequirePackage[dvips,dvipdf,pdftex]{graphicx}
+%\DeclareGraphicsRule{*}{mps}{*}{}
+%\DeclareGraphicsExtensions{.jpg,.mps,.pdf,.png,.ps}
+%\DeclareGraphicsRule{*}{eps}{*}{}
+\RequirePackage[Sonny]{fncychap}
+\RequirePackage[noindentafter,calcwidth]{titlesec}
+\RequirePackage{fancyhdr}
+\RequirePackage{paralist}
+\RequirePackage{listings,color}
+%\RequirePackage[toc,page,title,titletoc]{appendix}
+%\RequirePackage[round]{natbib}
+\RequirePackage{url}
+\RequirePackage{babel}
+\RequirePackage{ifthen}
+\RequirePackage{picinpar}
+\RequirePackage{colortbl}
+\RequirePackage{shadow}
+\RequirePackage{lineno}
+\RequirePackage{epsfig}
+%\RequirePackage{hyperref}
+% make sure to link CORRECTLY to images and tables, and not to the caption
+% needs to be loaded AFTER the hyperref package
+
+%
+\ifw@ntindex
+		\RequirePackage{makeidx}
+\fi
+%
+\ifcase\pdfoutput
+\else
+\RequirePackage{pdfpages}
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%   MAIN CODE PART: TEXTPAGE FORMATTING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%---------------
+%%%% PAGE LAYOUT
+%---------------
+\oddsidemargin=1.80cm
+%\evensidemargin=1.80cm
+\textwidth=14cm 
+\setlength{\voffset}{-10mm}
+\setlength{\textheight}{215mm}
+\setlength{\headheight}{14pt}
+%\setlength{\parindent}{0.0mm}
+%\addtolength{\parskip}{0.3\baselineskip}
+
+%--------------
+%%%% PAGE STYLE
+%--------------
+\fancypagestyle{thesisPageStyle}{%
+		\fancyhf{}	
+		\rhead{\thepage}
+		\lhead{\rightmark}
+		\renewcommand{\headrulewidth}{0.5pt}
+		\renewcommand{\footrulewidth}{0pt}
+		\addtolength{\headheight}{0.5pt}
+}
+
+\fancypagestyle{plain}{%
+		\fancyhead{}
+		\renewcommand{\headrulewidth}{0pt}
+}
+
+%------------------
+%%%% SECTION TITLES
+%------------------
+\AtBeginDocument{
+		\setcounter{secnumdepth}{\@secnumdepthvalue}
+		\titleformat{\section}[block]
+				{\Large\sffamily}
+				{}{0ex}
+				{\titleline*[l]{\titlerule[1pt]}\vspace{4pt} \thesection\quad}
+				[{\titleline*[l]{\vspace{18pt}\titlerule[1pt]}}]
+		\titlespacing*{\section}{0pc}{*3}{*2}
+		%
+		\titleformat{\subsection}[block]
+				{\large\sffamily}
+				{}{0ex}
+				{\ifthenelse{\@secnumdepthvalue<2}{}{\thesubsection\quad}}
+				[]
+		\titlespacing*{\subsection}{0pc}{*2}{*1}
+		%
+		\titleformat{\subsubsection}[block]
+				{\large\sffamily}
+				{}{0ex}
+				{\ifthenelse{\@secnumdepthvalue<3}{}{\thesubsubsection\quad}}
+				[]
+		\titlespacing*{\subsubsection}{0pc}{*1}{*0}
+		%
+		%
+		\myCppCodeFormat
+		\myJavaCodeFormat
+		\myShabox
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% MAIN CODE PART : MAKING THE FRONT PAGES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%--------------
+%%%% TITLE PAGE
+%--------------
+\newcommand{\makeTitlePage}{%
+    \begin{titlepage}
+    		\null
+		    \hbox{  
+			\includegraphics[scale=0.2]{Images/UA.png}
+                    }
+		    \hbox{
+		      	\vrule depth 0.87\textheight%
+		      	\mbox{\hspace{2pt}}
+		      	\vtop{%
+		        	\vskip 70\p@
+		       		\raisebox{0mm}[5ex][0ex]{
+		       				\parbox{12cm}{  {\LARGE \bfseries \@title  \par}  }
+		       		}
+		       		\vskip 100\p@
+			        \mbox{\hspace{2pt} \bfseries \@author \par}			        
+			        \vskip 100\p@
+				\mbox{\hspace{2pt} \footnotesize{\@advisorname :\quad \@principaladvisor } \par}
+				\vskip 5\p@
+				\mbox{\hspace{2pt} \footnotesize{\@assistantadvisorname :\quad \@assistantadvisor } \par}
+				\vskip 45\p@
+				\raisebox{0mm}[6ex][0ex]{
+			        	\parbox{10cm}{{\@titlepageblurb} }
+				}
+			        \vskip 50\p@
+			        \mbox{ 
+					\includegraphics[scale=0.25]{Images/FoTS.png} 
+                             	}
+			        \raisebox{4mm}{
+					\resizebox{!}{0.47cm}{
+					\parbox{8cm}{ \scshape \@researchgroupblurb }
+					}
+			        }
+		        }
+		    } 
+		    \vfill                   
+  	\end{titlepage}
+}
+
+%-------------------
+%%%%% COPYRIGHT PAGE
+%-------------------
+\newcommand{\makeCopyrightPage}{%
+		\begin{titlepage}
+        \null
+        \vfill
+        \begin{center}
+                \large
+                Copyright\ \copyright\ \@copyrightyear\ \@author\\
+                \@copyrightblurb
+        \end{center}
+        \vfill
+    \end{titlepage}
+}		
+
+%-------------------
+%%%%% SIGNATURE PAGE
+%-------------------
+\newcommand{\signature}[1]{%
+    \vspace{1.0in}
+    \hbox to 5in{\hfil\begin{tabular}{@{}l@{}}
+    \vrule width 4in height 0.4pt depth 0pt\\ #1\end{tabular}}
+}
+
+\newcommand{\makeSignaturePage}{%
+    \begin{titlepage}
+				\begin{flushright}
+		    		\begin{minipage}{5in}
+		      			\vspace{7cm}
+		        	  \@signatureblurb
+		            \par
+		            % pricipal advisor
+		            \signature{\@advisorname ,\quad \@principaladvisor}
+		            \vfill
+		            % if second principal advisor
+		            \if*\@coprincipaladvisor \else
+		            \signature{\@coadvisorname ,\quad \@coprincipaladvisor}
+		            \vfill\fi
+		            \if*\@assistantadvisor \else
+		            \signature{\@assistantadvisorname ,\quad \@assistantadvisor}
+		            \vfill\fi
+
+		        \end{minipage}
+		    \end{flushright}
+    \end{titlepage}
+}
+
+%---------------------------
+%%%%% TABLE OF CONTENTS PAGE
+%---------------------------
+\AtBeginDocument{
+		\setcounter{tocdepth}{\@tocdepthvalue}
+}
+\newcommand{\makeTableOfContentsPage}{%
+    {\sffamily \tableofcontents}
+}
+
+%-------------------------
+%%%%% LIST OF FIGURES PAGE
+%-------------------------
+\newcommand{\makeListOfFiguresPage}{%
+   	\listoffigures
+   	%\addcontentsline{toc}{chapter}{\listfigurename}
+}
+
+%------------------------
+%%%%% LIST OF TABLES PAGE
+%------------------------
+\newcommand{\makeListOfTablesPage}{%
+   	\listoftables%
+   	%\addcontentsline{toc}{chapter}{\listtablename}
+}
+
+%-------------------------
+%%%%% LIST OF ALGORITHMS PAGE
+%-------------------------
+\newcommand{\makeListOfAlgorithmsPage}{%
+   	\listof{algorithm}{List of Algorithms}
+   	%\addcontentsline{toc}{chapter}{List of Algorithms}
+}
+
+%---------------
+%%%% FRONT PAGES
+%---------------
+\newcommand{\frontpages}{%    
+		\pagenumbering{roman}
+    \pagestyle{plain}
+   	\makeTitlePage
+   	\ifw@ntcopyright \makeCopyrightPage \fi
+   	\ifw@ntsignature \makeSignaturePage \fi 
+		\ifw@nttableofcontents \makeTableOfContentsPage \fi
+   	\ifw@ntlistoffigures \makeListOfFiguresPage \fi
+   	\ifw@ntlistoftables \makeListOfTablesPage \fi
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% MAIN CODE PART : MAKING THE MAIN BODY PAGES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%-------------------
+%%%% MAIN BODY PAGES
+%-------------------	
+\newcommand{\mainbodypages}{%
+		\pagestyle{thesisPageStyle}
+		\pagenumbering{arabic}
+		%\setlength{\parindent}{0.0mm}
+		%\addtolength{\parskip}{0.5\baselineskip} 
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% MAIN CODE PART : MAKING THE BACK PAGES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------
+%%%%% BIBLIOGRAPHY PAGE
+%----------------------
+\newcommand{\makeBibliographyPage}{%
+  	\bibliographystyle{plainmod}
+  	\bibliography{\@bibfile}
+}
+
+%---------------------
+%%%%%   THE INDEX PAGE
+%---------------------
+\newcommand{\makeIndexPage}{%
+		\addcontentsline{toc}{chapter}{Index}  	
+		\printindex
+}
+
+%--------------
+%%%% BACK PAGES
+%--------------
+\newcommand{\backpages}{%
+		\pagestyle{plain}
+		\ifw@ntbibliography
+				\makeBibliographyPage
+		\fi
+		\ifw@ntindex
+				\makeIndexPage
+		\fi
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% MISCELLANEOUS COMMANDS TO BE USED IN THE MAIN BODY
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%---------
+%%%% myDef
+%---------
+\newcommand{\myDef}[2]{
+    \begin{flushright}
+        \parbox{3.3cm}{
+            \begin{flushleft}
+                {\emph Definitie:\\ \vspace{1mm}}{\bf  #1 }
+            \end{flushleft}
+        }
+        \parbox{10.5cm}{ #2 }
+    \end{flushright}
+}
+
+%---------
+%%%% myTxt
+%---------
+\newcommand{\myTxt}[2]{
+    \begin{flushright}
+        \parbox{3.3cm}{
+            \begin{flushleft}
+                {\bf  #1 }
+            \end{flushleft}
+        }
+        \parbox{10.5cm}{ #2 }
+    \end{flushright}
+}
+
+%------------
+%%%% myMarTxt
+%------------
+\newcommand{\myMarTxt}[1]{
+    \reversemarginpar
+	  \setlength{\marginparwidth}{5cm}
+	  \marginpar[\ \\ \begin{minipage}{5cm}{\begin{flushright} { #1 } \end{flushright}}\end{minipage}]{}
+}
+
+%-------------
+% mySidebarTxt
+%-------------
+\newcommand{\mySidebarTxt}[1]{%
+		\newlength{\temptabcolsep}
+		\setlength{\temptabcolsep}{\tabcolsep}%
+\setlength{\tabcolsep}{0pt}%
+\begin{tabular}{r|>{\columncolor[gray]{0.75}}cr}%
+\begin{minipage}{4cm}%
+						\begin{flushright}
+    #1%
+            \end{flushright}
+\end{minipage}%
+        \hspace*{0.15cm} &%
+		\hspace*{0.15cm} &%
+\end{tabular}%
+\setlength{\tabcolsep}{\temptabcolsep}%
+}
+
+%---------------------
+% myShadedParagraphTxt
+%---------------------
+\newcommand{\shadedparagraph}[1]{%
+\begin{tabular}{>{\columncolor[gray]{.75}}l}%
+\begin{minipage}{0.96\textwidth}%
+\vspace*{0.2cm}%
+#1%
+\vspace*{0.2cm}%
+\end{minipage}%
+\end{tabular}%
+}
+
+%-----------
+% myBoxedTxt
+%-----------
+\newcommand{\framedparagraph}[1]{
+		\setlength{\fboxsep}{0.5cm}
+		\begin{center}
+ 				\framebox { \parbox{13cm}{#1}}
+		\end{center}
+}
+
+%----------------
+% myCppCodeFormat
+%----------------
+\newcommand{\myCppCodeFormat}{%
+		\lstloadlanguages{C++}
+		\lstset{language=C++,commentstyle=\scriptsize\color{green}, identifierstyle=\color{red},tabsize=4, xleftmargin=2ex,captionpos=b}
+}
+
+%-----------------
+% myJavaCodeFormat
+%-----------------
+\newcommand{\myJavaCodeFormat}{%
+		\lstloadlanguages{Java}
+		\lstset{language=Java,commentstyle=\scriptsize,identifierstyle=\color{red},tabsize=4, xleftmargin=2ex,captionpos=b}
+}
+
+%-----------------
+% myShabox
+%-----------------
+\newcommand{\myShabox}{%
+		\setlength{\sdim}{6pt}
+}
+
+% graphviz.tex
+% originally written by Derek Rayside, November 2003
+% following an idea that Daniel Jackson implemented in his Tagger program
+%
+% parameters to \digraph:
+% 1 - parameters for \includegraphics (optional; default value is "scale=1")
+% 2 - name of the digraph
+% 3 - body of the digraph
+\newcommand{\digraph}[3][scale=1]{
+\newwrite\dotfile
+\immediate\openout\dotfile=#2.dot
+\immediate\write\dotfile{digraph #2 {\string#3}}
+\immediate\closeout\dotfile
+\IfFileExists{#2.ps}
+% the postscript exists: include it
+{ \includegraphics[#1]{#2} }
+% the postscript doesn't exist: tell the user how to create it
+{ \fbox{ \begin{tabular}{l}
+The file \texttt{#2.ps} hasn't been created from
+\texttt{#2.dot} yet. \\
+Run `\texttt{dot -Tps -o #2.ps #2.dot}' to create it. \\
+Here is a \textsf{bash} loop to process all \textsf{dot} files
+in the current directory: \\
+\texttt{
+for f in *.dot do ;
+dot -Tps -o \$\{f\%dot\}ps \$f ;
+done
+}
+\end{tabular}}
+}
+}
+
+
+% BoxedGraph
+%
+% 1 - parameters for \includegraphics (optional; default value is "scale=1")
+% 2 - name of the digraph
+\newcommand{\psgraphboxed}[4][scale=1]
+{
+	\begin{figure}[h]
+		\begin{center}
+			%\fbox{
+			\includegraphics[#1]{#2}
+			\caption{#3}
+			\label{#4}
+			%}
+		\end{center}
+	\end{figure}
+}
+
+

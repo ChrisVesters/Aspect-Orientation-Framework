@@ -1,0 +1,270 @@
+\documentclass[a4paper]{report}
+
+\usepackage[masterthesis,english]{comp}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\title{A General Aspect Orientation Framework}
+\author{Chris Vesters}
+\principaladviser{Dirk Janssens}
+\assistantadviser{Tim Molderez}
+\submitdate{May 2014}
+\bibfile{references}
+\bibpunct{[}{]}{;}{a}{,}{,}
+
+% Make hyperref package use black links
+\hypersetup{
+	pdfauthor={Chris Vesters},
+	pdftitle={A General Aspect Orientation Framework},
+	pdfkeywords={Aspect Orientation, Framework},
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\begin{document}
+\frontpages
+
+\clearpage 
+\phantomsection 
+\addcontentsline{toc}{chapter}{Nederlandstalige Samenvatting}
+\chapter*{Nederlandstalige Samenvatting}
+
+\clearpage 
+\phantomsection 
+\addcontentsline{toc}{chapter}{Acknowledgements}
+\chapter*{Acknowledgements}
+
+\clearpage 
+\phantomsection 
+\addcontentsline{toc}{chapter}{Abstract}
+\chapter*{Abstract}
+
+\mainbodypages
+
+\chapter{Introduction}
+\section*{Aspect Oriented Programming}
+Aspect oriented programming (from now on referred to as AOP) is a way of programming that allows separating code beyond the capabilities of object oriented programming. It allows the separation of cross cutting concerns from the core concerns, by doing this we achieve more modular code, prevent code tangling and code scattering which results in code that is easier to maintain and modify.
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.5]{images/Code_Scattering.png}
+\label{fig:Code_Scattering}
+\caption{A representation of code scattering\cite{Laddad10}.}
+\end{figure}\\
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.5]{images/Code_Tangling.png}
+\label{fig:Code_Tangling}
+\caption{A representation of code tangling\cite{Laddad10}.}
+\end{figure}\\
+AOP works by identifying join points, which is certain point in the execution of the program. The set of all the join points is called the join point model. It is at these join points that we can modify the original program execution. This change can go from something as simple as logging to something more invasive where the original code isn't even executed at all.\\
+A first thing we need is a way to indicate which join points we want to work on, this is done by a point cut. Now we can refer to certain join points we also need a way to modify the execution. This is done by an advice, note that there can be multiple kinds of advice.\\
+In the end everything has to come together, this is done by the weaver.\\
+\\
+The most known AOP language by far is AspectJ, which is an extension of Java. To demonstrate the concept of AOP a couple of AspectJ examples are shown here:\\
+TODO: EXAMPLES!\\
+
+\section*{Problem}
+Currently AOP is often implemented by extending an existing language, this often leads to completely new languages requiring new compilers and  breaking existing tools for the base language. Especially the latter is a reason why some people haven't made the step to start working with aspect oriented languages.\\
+\\
+Though the concepts of AOP are quite general, which is reflected by the similarities in different aspect oriented languages, all the AOP parts of these languages were written from scratch. The main reason for this is the absence of a general language independent library or framework to handle aspect orientation. Another reasons is that by building a language from scratch you get more freedom to implement the desired features.
+
+\section*{Goal}
+The goal of this thesis is to build a framework that encloses all core ideas of AOP in an abstract manner without being specific about a particular base language. This will enable use to use the framework to develop an aspect oriented language quicker and easier than currently is the case by extending a couple of parts. The framework will work for completely new languages, and existing ones we want to extend. The latter one will pose the most problems as the freedom to adapt the compiler is very limited. (TODO: add in a later section the idea of injecting the code into a compiler with AspectJ)
+
+\chapter{Aspect-Oriented Language Components}
+The decomposition of an aspect oriented language can be done as in (REF) shown in \hyperref[fig:AOL_Components]{figure \ref*{fig:AOL_Components}}.
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=1]{images/AOL_Components.png}
+\caption{Components Of A Aspect Oriented Language}
+\label{fig:AOL_Components}
+\end{figure}\\
+Most of the diagram is straightforward, but a small explanation is given anyway. The base language is the language that is being extended with aspects, note that this can be any kind of language and is not restricted to procedural or object oriented languages.\\
+The base language defines the points in the execution and therefore defines the possible join point models, this model is an implicit part of the aspect oriented language that is made explicit by the point cut language.\\
+Every advice is explicitly mapped onto a point cut. To resolve conflicts that may arise when multiple advices are to be executed at the same time we need to be able to specify an order. This order can be specified based on point cuts (only if there can be only one advice for each point cut) or on the advices itself.\\
+The dependency from the point cut language and the advice language to the base language exists because we want to be able to specify point cuts and the code to be executed to be as close to the base language as possible to minimize the effort for the user.\\
+The weaver is the part that puts everything together, which makes it depending on all the other parts.
+
+TODO: suggest a more practical decomposition.
+
+
+\chapter{Aspect Oriented Framework}
+The constructed framework provides a basis for all compontents using several classes such as Pointcut, PointcutRule, Context, Advice and Weaver. (TODO: Add class diagram!)\\
+\\
+A pointcut can have multiple rules, it are these rules that will match with a join point. To easily compare these rules and a join point, both are specified in the same way (as a PointcutRule). Though this results in situations where we have to be careful.\\
+\\
+To supply global information to a PointcutRule, we can provide it with a Context. The most common use of such a context is to provide a call sequence.\\
+\\
+Languages can be created as you like, which is a good thing, because they should be similar to the base language. Though, the result of the languages are extensions of the abstract PointcutRule and Advice class.\\
+\\
+You can specify an order as you like, but it eventually should come down to a partial ordering, which the framework can handle.\\
+\\
+Though it is possible to work with an ordering on the pointcuts, the framework works with an ordering on the advice. This allows more flexibility and is in general easier to understand.\\
+\\
+What is still required to add support for aspect-oriented constructs to a language?
+\begin{itemize}
+\item Specify a language for the pointcuts and advices. Since these languages should be as close as possible to the base language, the framework can not provide these for you.
+\item Extend the abstract class PointcutRule, based on the join point model which is specific to the base language. You have to provide one extension for each kind of join point. The extension however is limited to adding the required information and a method 'encloses' to specify whether one pointcut encloses another.
+\item Extend the abstract class Advice, this extension is required to put the body that should be executed in the advice. Since this body will be specified in the base language or something very similar.
+\item Extend the abstract class Context, to add all global information that you want to use in your poincuts. This is not required though, but can be used to extend the expressiveness of the language.
+\end{itemize} 
+Since the framework is separated from the syntactical elements you need to create a language to specify aspects, pointcuts and order. It are these pointcuts, aspects and order that you have to pass to the weaver. These languages are often created from scratch, which means you can take AOP into account when designing the parser. The parser for the base language however may already exist, and a lot harder to modify. Nevertheless should this parser be changed such that it can extract join points from the code and provide these to the weaver.\\
+\\
+Though it is possible to use different languages for pointcuts, aspects and order, I have chosen to use one language to specify it all. The main reason for this is that there is a high dependency between the components and some similarities. By using only one language I can exploit the similarities and minimize the amount of work required.
+
+\chapter{Small C}
+\section{Introduction}
+Small C is a minimal subset of the C language. It does not support structs or including other files, though printf and scanf are supported. There are two reasons why this language is chosen, it is a small language that still contains the elements of modern day programming languages and a compiler was available and modifiable.\\
+\\
+TODO: EXAMPLE OF SMALL C
+
+\section{Aspect Orientation}
+The join point model consists of calling and executing functions and getting and setting the value of global variables. This means that there are two sub-classes of PointcutRule, being MethodPointcutRule and MemberPointcutRule.\\
+Because there is no context provided the join points for a function call and a function execution will give the same result. The distinction is however made to show it's potential usability.\\
+\\
+There are three advice kinds for executing a function advice: before, around and after. It would be possible to only allow around advices since before and after are special cases. For the variable advice there are only two moments: before and after.\\
+\\
+You can specify an order of executing the advices since conflicts may arise. This order is specified explicitly by saying that one advice is 'bigger' than another. The result of this order is that the biggest advice 'encloses' the smaller one.\\
+TODO: show it with an image.
+
+We notice that the order for an after-after conflict is the inverse of that in a before-before conflict. This may seem weird at first, but the reason for this is that we need to be able to resolve around-around conflicts. In this case we want one around advice to enclose the other, this however means that the before part of this enclosing advice comes before the other advice, but the after part comes after it.\\
+\\
+TODO: explain how the file changes: wrappers!
+\section{Examples}
+TODO
+
+\section{Difficulties}
+Despite having a modifiable compiler, there were a lot of problems of weaving the advices into the code. This was caused by the fact that the compiler was not designed to allow changes after parsing the code. Changing this would require big changes in the compiler and was therefor not really an option. Instead of changing the compiler another alternative was used, by creating two compilers, both with small changes, we could weave the file in multiple passes.\\
+\\
+In phase 1 the source code will be parsed and all join points will be specified to the weaver. The weaver will produce wrappers and add these to a temporary output file. In phase 2 the modified file will be parsed and the original calls will be modified to point to the wrappers. In phase 3 the actual advice bodies will be written to the wrappers. Phase 4 is to compile the weaved file with a regular compiler, this is not done by the weaver and has to be done by the user himself.\\
+\\
+It was impossible to change the calls in the first phase due to a simple circular dependency. The compiler checks that the called function actually exists. Since the compiler does not allow to add declarations before the current point, these declarations have to exist in the source code itself. To do this however we need to know which join points occur, and thus we need to have parsed the file before.\\
+\\
+Adding the content can not be done before phase 2, simply because the content contains function calls to the actual functions which need to be kept. It is impossible to distinguish a call from within a wrapper from one within a 'normal' function, yet we need to treat them separately. Therefor we need to add the content in a separate phase.
+
+\chapter{Dot}
+\section{Introduction}
+Dot is a language that allows you to easily specifies the structure and appearance of a graph. The features it supports are directed edges, undirected edges, subgraphs, labels for nodes and edges, different shapes, colors and more.\\
+\\
+Because there is no time aspect related to dot, adding AOP may seem weird since join points are defined as points in the execution of a program. This actually means that the join points simply map to points in the code in a static way. Yet the ideas of AOP can still be applied.\\
+\\
+TODO: EXAMPLE OF DOT
+
+\section{Aspect Orientation}
+The join point model consists of nodes and edges, for which we can specify required attributes, and graphs, which is used to specify pieces larger than one element. To achieve this there are three subclasses of PointcutRule: NodePointcutRule, EdgePointcutRule and GraphPointcutRule.\\
+\\
+An advice may consist of attributes (for nodes or edges) and/or entire nodes or edges in the case of a graph pointcut. For each advice you need to specify what to do with the elements, you can either add them or delete them. Because there is no notion of time, you don't need to specify when the advice should be executed.\\
+\\
+Despite the absence of time, you may still need to specify an order when advices operate on the same elements. In such cases changing the order may lead to different results.
+
+\section{Examples}
+TODO
+
+\section{Difficulties}
+The biggest problem encountered was how to decide on the syntax of the Aspect Orientation Language. Once this was done adding Aspect Orientation went really fast, also thanks to the compiler which allowed it to easily modify the graph and write it back to file.\\
+
+
+\chapter{...}
+- Introduction to base language.\\
+- Pointcuts + Other Aspect Oriented related stuff.\\
+- Difficulties.
+\chapter{Discussion}
+- To what extent are parts being reused? (or not)\\
+- How much coupling is there between the base language and the module?\\
+- How flexible is the model? What range of base languages can it handle?
+\chapter{Related Work}
+- About building languages from modules in general .. or about building languages out of smaller languages (also called language composition)
+\chapter{Conclusion}
+
+\chapter{Temporary Stuff About Languages}
+\section{AOWP}
+TODO: REFERENCE!\\
+As mentioned in the paper, we need to provide a context to be able to handle coming from a certain page. This can be done by adding this information to the context of the pointcut and join point. The paper mentions different events the language can handle, if the language were to be made with the framework we would have to create a PoincutRule for each of these events (or divide them into groups!).\\
+\\
+The framework does not provide the '\&' or '!' operator, only the '|' is available by specifying multiple pointcutrules in one poincut. Though it is an inconvience, it is not a big problem since we can create an AndPointcutRule which simply takes two other pointcutrules and matches if both match. The same goes for the NotPointcutRule which will invert the result of a pointcutRule.\\
+\\
+In it's current form the framework does not provide run-time weaving. It is however to solve this problem in two different ways. The first is by adding extra code that checks the run-time information and makes a decision based on that. The second is by calling the weaver at run time.  By doing this the run-time information is available at the moment of weaving and can be used to specify pointcuts.\\
+\\
+Since the framework lets the user specify a languages as he likes, the same language can be used as in the paper as long as there is a compiler for it.
+\section{AspectGrid}
+TODO: REFERENCE!\\
+Since it is required to design your own aspect langauge, we can design it that way that the details are hidden as is mentioned in the paper.\\
+AspectGrid itself is based on AspectJ, which makes creating it pretty fast and easy. The framework presented here in this thesis is more general and does not provide existing pointcuts. This means that using this framework instead of extending AspectJ takes a bit more effort.\\
+\\
+It is however perfectly possible and it will share many resemblances with the Aspect Oriented version of Small C that was earlier presented in this thesis. The reason for this is that AspectGrid focuses on spreading computational load, and will therefor focus on the function calls, other pointcuts such as getting and setting a member aren't relevant.
+\section{AspectMatlab}
+TODO: REFERENCE!\\
+To add extra information to the pointcuts as is done in the paper, we have to add members to the specific subclasses of the PointcutRule.\\
+\\
+Pointcuts are: call and execution of methods, get and set of arrays and a special loop pointcut. The within will not be part of the PointcutRule but will be provided as a context.\\
+\\
+The translation to matlab code can be done the same way with the framework as it was done in the paper.\\
+\\
+AspectMatlab orders the pointcuts implicitly, the designed framwork does not do this. This means that to maintain the implicit ordering caused by the order of appearance we need to add an explicit ordering to the pointcuts during parsing.\\
+\\
+The context selectors add contexts to the pointcut or advice (DON'T UNDERSTAND! LOOK IT UP!!!) which can be done by using the context for PointcutRules.\\
+\\
+The designed framework does not provide a way to share information between advices, or even between the same advices that is run multiple times. To achieve this we have to rely on the options present in the base language. (LOOK UP: is there static stuff in matlab?!)
+\section{Conspects}
+TODO: REFERENCE!\\
+REREAD THIS, it doesn't make much sense!\\
+\\
+To be able to work with the framework we need to shift a lot of things, first we note that the contexts as presented in the paper can not be achieved. This is however not really a problem since they can be implemented as plain Java Classes.\\
+The idea of the event methods that are presented in the paper match what the framework considers a pointcut, there are however some differences. The framework does not allow code in pointcuts in contrary to event methods. The optional guard that can be added will result in a context for the pointcutrule.\\
+\\
+There seem to be an explicit invocation of events, this can not be done with the framework, and I need to look into this a bit more.\\
+There seem to be no real pointcuts, they are part of the advice. This will not be a problem for the framework.
+\section{DISL}
+The open joinpoint model can be implemented by having a general pointcut to represent a set of byte code instructions. It's up to the parser to detect these sets of byte code.\\
+\\
+Compatibility with Java and the Java virtual machine is in my opinion achievable since the framework is written in Java. If we look at the more general idea of compatibility we may encounter some problems that are hard to fix and require some workarounds.\\
+\\
+Access to context data can easily be provided by adding it to the join point and at the same time we can check on this data by setting it in the point cut as a kind of guard. Allowing the user to define its own context elements is harder. How we can do this is not clear, let me think about it.\\
+To add the dynamic information it is best to run the weaver at run time.\\
+\\
+Instrumentations map to advice.\\
+Markers map to pointcuts.\\
+To add custom markers the weaver needs to be able to detect them, how are we going to do this? Let me think about it.\\
+\\
+The order is based on numbers: these need to be turned into an partial order, but that's easy.\\
+Also, the implicit order of appearance has to be made explicit to the weaver. The parser can do this by making an order while parsing where he states that the previous encountered one must occur before the next encountered.\\
+\\
+The communication between snippets may be a problem.\\
+Static \& Dynamic information: try to hack it in -> We can just do this! (Or what is meant with this?)\\
+Guards \& Scope: add context to pointcuts (or part of pointcuts itself). It can be used as a guard if the pointcut has filled in information.
+\section{KALA}
+TPMonitor => Specify Outside of framework? => Communication?\\
+\\
+Actions of transaction depend on run-time. (TPMonitor guards this => determines what to do)\\
+Secundary transaction: requires check at run-time.\\
+\\
+KALA declaration = pointcut, no names are used (pointcut needs to have name -> add it while parsing).\\
+The extra properties declared inside it are the advice.\\
+Framework requires splitting them, but this can be done implicit by the parser.\\
+\\
+Framework doesn't care about content of advice, that's up to the parser. This makes nested blocks possible.\\
+\\
+Translating code to work with TPMonitor can be done.\\
+Using Reflex will become impossible, but the idea remains the same.\\
+
+\backpages
+\begin{appendices}
+\chapter{An appendix}
+\label{chapt:appendix}
+
+\end{appendices}
+
+%\begin{thebibliography}{9}
+%\bibitem{Laddad10}
+%  Ramnivas Laddad,
+%  \emph{AspectJ In Action}.
+%  Manning Publications, Greenwich,
+%  2nd Edition,
+%  2010
+
+%\end{thebibliography}
+
+\end{document}
