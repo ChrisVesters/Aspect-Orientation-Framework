@@ -74,25 +74,27 @@ Though the concepts of AOP are quite general, which is reflected by the similari
 \section*{Goal}
 The goal of this thesis is to build a framework that encloses all core ideas of AOP in an abstract manner without being specific about a particular base language. This will enable use to use the framework to develop an aspect oriented language quicker and easier than currently is the case by extending a couple of parts. The framework will work for completely new languages, and existing ones we want to extend. The latter one will pose the most problems as the freedom to adapt the compiler is very limited. (TODO: add in a later section the idea of injecting the code into a compiler with AspectJ)
 
-\chapter{Aspect-Oriented Language Components}
-The decomposition of an aspect oriented language can be done as in (REF) shown in \hyperref[fig:AOL_Components]{figure \ref*{fig:AOL_Components}}.
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=1]{images/AOL_Components.png}
-\caption{Components Of A Aspect Oriented Language}
-\label{fig:AOL_Components}
-\end{figure}\\
-Most of the diagram is straightforward, but a small explanation is given anyway. The base language is the language that is being extended with aspects, note that this can be any kind of language and is not restricted to procedural or object oriented languages.\\
-The base language defines the points in the execution and therefore defines the possible join point models, this model is an implicit part of the aspect oriented language that is made explicit by the point cut language.\\
-Every advice is explicitly mapped onto a point cut. To resolve conflicts that may arise when multiple advices are to be executed at the same time we need to be able to specify an order. This order can be specified based on point cuts (only if there can be only one advice for each point cut) or on the advices itself.\\
-The dependency from the point cut language and the advice language to the base language exists because we want to be able to specify point cuts and the code to be executed to be as close to the base language as possible to minimize the effort for the user.\\
-The weaver is the part that puts everything together, which makes it depending on all the other parts.
-
-TODO: suggest a more practical decomposition.
-
+\chapter{Aspect Oriented Language Components}
+An aspect oriented language consists of several components, to explain these I will start from the base language and work my way up to get an aspect oriented language. At every point I'll make it more concrete with a small AspectJ example.\\
+\\
+The starting point of creating an aspect oriented language is the base language, this is the language that we want to extend or is a completely new language. In the latter case the base language will be the new language excluding all the aspect oriented features. The base language can be any kind of language: procedural, object oriented, functional, logical, data oriented, ... (TODO: EXAMPLE)\\
+\\
+By defining the base language we implicitly defined a join point model. This is because the join point model consists of all the points that occur during execution on which intervention of the aspects is allowed. The join point model will always remain implicit, but it is an important part of any aspect oriented language as it is the link between the base language and the aspect oriented part.\\
+\\
+Knowing at which points we can intervene doesn't allow us to do anything, we need a way to identify certain points. This identification is done by using pointcuts, specifying one or more join points. They way in which pointcuts allow us to refer to join points should be as close as possible as the way in which they appear in the base language. (TODO: EXAMPLE)\\
+\\
+Now that we can refer to certain join points, we can actually start modifying the original code. This modification is encapsulated in an advice, which contains 'code' that has to be executed. When this 'code' is executed is defined by the pointcut with which the advice is associated. Whenever the program passes a join point that matches with the associated pointcut, this advice must be executed. The 'code' in the advice should be written in the base language to prevent the user from learning an entire new language. (TODO: EXAMPLE) The advice should also be able to have access to information about the join point, this information will be provided by the pointcut.\\
+\\
+One problem that arises is: what is suppose to happen if we encounter a join point at which multiple advices are to be executed? This can be either caused by multiple pointcuts matching to the join point, or multiple advices being associated with the same pointcut. The latter case can be easily solved as we can combine the two advices into one bigger advice. The first is a bit more tricky since the one pointcut can also match other join points, different from the other, which means we can't just combine them. (TODO: illustrate) The solution to this is of course to introduce an ordering mechanism. This ordering can be either placed on the pointcuts or on the advices, in the first case we still need to make sure that there is only one advice for each pointcut though.\\
+\\
+One final component we need, is something that will actually make sure that the advices are executed when the join points are encountered. The weaver will make this happen, and can do this in multiple ways. The easiest is compile-time, weaving which comes down to a pre-processing step, a more advanced form is run-time weaving, yet other forms are available depending on the base language. (TODO: EXAMPLE)\\
+\\
+With the components specified above we are perfectly possible to create an aspect oriented language, despite that we note that some features are still missing, as an example we note that communication between different advices is impossible. Since aspect orientation is often presented as an extension of object oriented programming it makes sense to introduce some form of class, called aspects. These aspects will contain the advices, which match functions and methods in object oriented languages, and can be extended to have members too. By doing this we immediately have can provide the advantages offered by object oriented languages among which are inheritance and encapsulation. (TODO: EXAMPLE)\\
+\\
+An overview of all the components and how they are linked together is shown in figure (TODO:REF). The weaver is not considered to be part of the aspect language just as a compiler is not considered a part of the language.
 
 \chapter{Aspect Oriented Framework}
-The constructed framework provides a basis for all compontents using several classes such as Pointcut, PointcutRule, Context, Advice and Weaver. (TODO: Add class diagram!)\\
+The constructed framework provides a basis for all compontents using several classes such as Pointcut, PointcutRule, Context, Advice and Weaver. (TODO: change names of Pointcut to PointcutSet and PointcutRule to Pointcut) (TODO: Add class diagram!)\\
 \\
 A pointcut can have multiple rules, it are these rules that will match with a join point. To easily compare these rules and a join point, both are specified in the same way (as a PointcutRule). Though this results in situations where we have to be careful.\\
 \\
@@ -175,12 +177,21 @@ The biggest problem encountered was how to decide on the syntax of the Aspect Or
 - To what extent are parts being reused? (or not)\\
 - How much coupling is there between the base language and the module?\\
 - How flexible is the model? What range of base languages can it handle?
+\chapter{Future Work}
+- Add the concept of 'Aspects', this will be similar to Objects in an OO language.\\
+- Add global variables, is this useful? We will need a general wrapper.\\
+- It should be easier to use it on run-time.\\
+- Debugging isn't really possible -> keep links from the weaved to the original code.\\
+- Optimizing the weaving process, currently each change will require to completely re-weave all the code.\\
 \chapter{Related Work}
 - About building languages from modules in general .. or about building languages out of smaller languages (also called language composition)
 \chapter{Conclusion}
 
 \chapter{Temporary Stuff About Languages}
+It is impossible to keep on implementing more and more languages. Therefor I will discuss existing aspect oriented languages and how they could be implemented using the framework.
 \section{AOWP}
+
+
 TODO: REFERENCE!\\
 As mentioned in the paper, we need to provide a context to be able to handle coming from a certain page. This can be done by adding this information to the context of the pointcut and join point. The paper mentions different events the language can handle, if the language were to be made with the framework we would have to create a PoincutRule for each of these events (or divide them into groups!).\\
 \\
@@ -264,7 +275,14 @@ Using Reflex will become impossible, but the idea remains the same.\\
 %  Manning Publications, Greenwich,
 %  2nd Edition,
 %  2010
-
+%
+%\bibitem{AOWP}
+%  
+%  Aspect-oriented Programming for Web Controller Layer
+%Keiji Hokamura
+%Naoyasu Ubayashi
+%Shin Nakajima
+%Akihito Iwai
 %\end{thebibliography}
 
 \end{document}
