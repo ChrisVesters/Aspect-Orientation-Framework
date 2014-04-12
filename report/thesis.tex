@@ -152,43 +152,16 @@ One final remark that has to be made is that implementing both join points and p
 \\
 (TODO: can we ommit the context type and just add all this stuff as arguments?)\\
 \\
-To conclude this chapter I will briefly explain how the framework can be expanded to work with a base language, for more detailed examples I refer to chapters (TODO: REF) where the framework is expanded for two different languages. Before being able to use the framework you have to specify a language in which it is possible to specify pointcuts, advice and optionally an order. You have to provide a parser for this language, it is this parser that will create the pointcuts and advices which are handed over to the weaver.\\
+To conclude this chapter I will briefly explain how the framework can be expanded to work with a base language, for more detailed examples I refer to chapters (TODO: REF) where the framework is expanded for two different languages. Before being able to use the framework you have to specify a language in which it is possible to specify pointcuts, advice and optionally an order. You have to provide a parser for this language, which will create the pointcuts and advices which are handed over to the weaver. Due to the separation of the components it is possible to have separate languages for the pointcuts, advice and order, each with its own parser. In practice this will not be such an attractive option though since it involves a lot of extra work.\\
 \\
 The pointcuts and advice that has to be created has to be specific for the base language, this means that you first have to create a subclass of Advice and one or more subclasses for Pointcut.
 The advice subclass is simple, it must contain the body of the advice. The pointcuts need to contain all information to identify a join point. Since there will be multiple types of pointcuts you will have to implement one subclass for each type of pointcut. If you desire to add a context to the pointcut, you still have to create a class with the Context interface that contains all the context information you want to use.\\
 \\
-The pointcuts and advices ofcourse require you to implement a type system. Depending on the availability of the type system used by the base language, and more precise the compiler, it is possible to add small modifications to get the type system without much work. If not, this might be a bigger problem.\\
+The pointcuts and advices of course require you to implement a type system. Depending on the availability of the type system used by the base language, and more precise the compiler, it is possible to add small modifications to get the type system without much work. If not, this might be a bigger problem.\\
 \\
 Now you can create pointcuts and advice you still need to expand the Weaver class to add the actual weaving. Since the framework gives you the advices to execute for each join point all the extended weaver has to do is execute these advices at those times. This sounds easier than it sometimes is though, especially the way of how you can interact with the base language is important. (TODO: overview of interaction between languages and weaver)\\
 \\
-I know this sounds vague and very abstract, which is why I refer to chapters (REF) again since they contain worked out examples.\\
-
-TODO: explain how to extend the framework!\\
-\\
-\\
-// Old version:\\
-The constructed framework provides a basis for all compontents using several classes such as Pointcut, PointcutRule, Context, Advice and Weaver. (TODO: change names of Pointcut to PointcutSet and PointcutRule to Pointcut) (TODO: Add class diagram!)\\
-\\
-A pointcut can have multiple rules, it are these rules that will match with a join point. To easily compare these rules and a join point, both are specified in the same way (as a PointcutRule). Though this results in situations where we have to be careful.\\
-\\
-To supply global information to a PointcutRule, we can provide it with a Context. The most common use of such a context is to provide a call sequence.\\
-\\
-Languages can be created as you like, which is a good thing, because they should be similar to the base language. Though, the result of the languages are extensions of the abstract PointcutRule and Advice class.\\
-\\
-You can specify an order as you like, but it eventually should come down to a partial ordering, which the framework can handle.\\
-\\
-Though it is possible to work with an ordering on the pointcuts, the framework works with an ordering on the advice. This allows more flexibility and is in general easier to understand.\\
-\\
-What is still required to add support for aspect-oriented constructs to a language?
-\begin{itemize}
-\item Specify a language for the pointcuts and advices. Since these languages should be as close as possible to the base language, the framework can not provide these for you.
-\item Extend the abstract class PointcutRule, based on the join point model which is specific to the base language. You have to provide one extension for each kind of join point. The extension however is limited to adding the required information and a method 'encloses' to specify whether one pointcut encloses another.
-\item Extend the abstract class Advice, this extension is required to put the body that should be executed in the advice. Since this body will be specified in the base language or something very similar.
-\item Extend the abstract class Context, to add all global information that you want to use in your poincuts. This is not required though, but can be used to extend the expressiveness of the language.
-\end{itemize} 
-Since the framework is separated from the syntactical elements you need to create a language to specify aspects, pointcuts and order. It are these pointcuts, aspects and order that you have to pass to the weaver. These languages are often created from scratch, which means you can take AOP into account when designing the parser. The parser for the base language however may already exist, and a lot harder to modify. Nevertheless should this parser be changed such that it can extract join points from the code and provide these to the weaver.\\
-\\
-Though it is possible to use different languages for pointcuts, aspects and order, I have chosen to use one language to specify it all. The main reason for this is that there is a high dependency between the components and some similarities. By using only one language I can exploit the similarities and minimize the amount of work required.
+I know this sounds vague and very abstract, which is why I refer to chapters (REF) again since they contain worked out examples.
 
 \chapter{Small C}
 \section{Introduction}
