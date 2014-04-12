@@ -17,7 +17,7 @@ import org.antlr.runtime.CommonTokenStream;
 import aof.Advice;
 import aof.Argument;
 import aof.Match;
-import aof.PointcutRule;
+import aof.Pointcut;
 import aof.Weaver;
 import aofDot.AspectParser.AODotLexer;
 import aofDot.AspectParser.AODotParser;
@@ -42,7 +42,7 @@ public class DotWeaver extends Weaver {
 	 * @param node
 	 * @return
 	 */
-	private NodePointcutRule createPointcutRule(Node node) {
+	private NodePointcut createPointcutRule(Node node) {
 		assert (node != null);
 		
 		ArrayList<Argument> arguments = new ArrayList<Argument>();
@@ -51,7 +51,7 @@ public class DotWeaver extends Weaver {
 			arguments.add(new Argument(key, new Value(attrs.get(key))));
 		}
 		arguments.add(0, new Argument("_this", new Value(node.getId().getId())));
-		return new NodePointcutRule(node.getId().getId(), arguments);
+		return new NodePointcut(node.getId().getId(), arguments);
 	}
 	
 	/**
@@ -61,7 +61,7 @@ public class DotWeaver extends Weaver {
 	 * @param node
 	 * @return
 	 */
-	private EdgePointcutRule createPointcutRule(Edge edge) {
+	private EdgePointcut createPointcutRule(Edge edge) {
 		assert (edge != null);
 		
 		ArrayList<Argument> arguments = new ArrayList<Argument>();
@@ -71,18 +71,18 @@ public class DotWeaver extends Weaver {
 		}
 		arguments.add(0, new Argument("_this", new Value(edge.toString())));
 		
-		NodePointcutRule source = createPointcutRule(edge.getSource().getNode());
-		NodePointcutRule target = createPointcutRule(edge.getTarget().getNode());
+		NodePointcut source = createPointcutRule(edge.getSource().getNode());
+		NodePointcut target = createPointcutRule(edge.getTarget().getNode());
 		
 		boolean dir = (edge.getType() == 2);
-		return new EdgePointcutRule(source, target, dir, arguments);
+		return new EdgePointcut(source, target, dir, arguments);
 	}
 	
 	
-	public GraphPointcutRule createPointcutRule(Graph graph) {
+	public GraphPointcut createPointcutRule(Graph graph) {
 		assert (graph != null);
 		
-		ArrayList<PointcutRule> body = new ArrayList<PointcutRule>();
+		ArrayList<Pointcut> body = new ArrayList<Pointcut>();
 		ArrayList<Argument> gArgs = new ArrayList<Argument>();
 		
 		for (Node node: graph.getNodes(false)) {
@@ -93,7 +93,7 @@ public class DotWeaver extends Weaver {
 			body.add(createPointcutRule(edge));
 		}
 		
-		return new GraphPointcutRule(graph.getId().getId(), body ,gArgs);
+		return new GraphPointcut(graph.getId().getId(), body ,gArgs);
 	}
 	
 	
@@ -120,9 +120,9 @@ public class DotWeaver extends Weaver {
 			switch (dAdvice.action) {
 			case INSERT:
 				for (Match match: advices.get(advice)) {
-					for (PointcutRule rule: dAdvice.body) {
-						if (rule instanceof NodePointcutRule) {
-							NodePointcutRule npc = (NodePointcutRule) rule;
+					for (Pointcut rule: dAdvice.body) {
+						if (rule instanceof NodePointcut) {
+							NodePointcut npc = (NodePointcut) rule;
 							
 							if (match.containsKey(npc.name)) {
 								// It is an argument!
@@ -178,11 +178,11 @@ public class DotWeaver extends Weaver {
 									g.addNode(node);
 								}
 							}
-						} else if (rule instanceof EdgePointcutRule) {							
-							EdgePointcutRule epc = (EdgePointcutRule) rule;
+						} else if (rule instanceof EdgePointcut) {							
+							EdgePointcut epc = (EdgePointcut) rule;
 							
-							NodePointcutRule source = epc.source;
-							NodePointcutRule target = epc.target;
+							NodePointcut source = epc.source;
+							NodePointcut target = epc.target;
 
 							// Note: an insert on an edge means that we have to insert these attributes!
 							// Therefore we don't have to look for these!
@@ -193,7 +193,7 @@ public class DotWeaver extends Weaver {
 								for (Argument arg: source.getArgs()) {
 									nodeArgs.add(arg);
 								}
-								source = new NodePointcutRule(name, nodeArgs);
+								source = new NodePointcut(name, nodeArgs);
 							}
 							
 							if (match.containsKey(target.name)) {
@@ -202,7 +202,7 @@ public class DotWeaver extends Weaver {
 								for (Argument arg: target.getArgs()) {
 									nodeArgs.add(arg);
 								}
-								target = new NodePointcutRule(name, nodeArgs);
+								target = new NodePointcut(name, nodeArgs);
 							}
 							
 							// Create the edge!
@@ -307,9 +307,9 @@ public class DotWeaver extends Weaver {
 				break;
 			case DELETE:
 				for (Match match: advices.get(advice)) {
-					for (PointcutRule rule: dAdvice.body) {
-						if (rule instanceof NodePointcutRule) {
-							NodePointcutRule npc = (NodePointcutRule) rule;
+					for (Pointcut rule: dAdvice.body) {
+						if (rule instanceof NodePointcut) {
+							NodePointcut npc = (NodePointcut) rule;
 							
 							if (match.containsKey(npc.name)) {
 								// It is an argument!
@@ -363,14 +363,14 @@ public class DotWeaver extends Weaver {
 									break;
 								}
 							}
-						} else if (rule instanceof EdgePointcutRule) {
+						} else if (rule instanceof EdgePointcut) {
 							// Note: an edge can not be an argument!
 							// If we use an edge as argument, it becomes a NodePointcutRule!
 							// It can however contain arguments for it's source and target!
 							
-							EdgePointcutRule epc = (EdgePointcutRule) rule;
-							NodePointcutRule source = epc.source;
-							NodePointcutRule target = epc.target;
+							EdgePointcut epc = (EdgePointcut) rule;
+							NodePointcut source = epc.source;
+							NodePointcut target = epc.target;
 							ArrayList<Argument> args = new ArrayList<Argument>();
 							args.add(new Argument("_this", new Value("this")));
 							for (Argument arg: epc.getArgs()) {
@@ -384,7 +384,7 @@ public class DotWeaver extends Weaver {
 								for (Argument arg: source.getArgs()) {
 									nodeArgs.add(arg);
 								}
-								source = new NodePointcutRule(name, nodeArgs);
+								source = new NodePointcut(name, nodeArgs);
 							}
 							
 							if (match.containsKey(target.name)) {
@@ -394,14 +394,14 @@ public class DotWeaver extends Weaver {
 								for (Argument arg: target.getArgs()) {
 									nodeArgs.add(arg);
 								}
-								target = new NodePointcutRule(name, nodeArgs);
+								target = new NodePointcut(name, nodeArgs);
 							}
 							
 							if (epc.getArgs().length == 0) {
 								args.add(new Argument(null, new AnyType()));
 							}
 							
-							EdgePointcutRule compare = new EdgePointcutRule(source, target, epc.directed, args);
+							EdgePointcut compare = new EdgePointcut(source, target, epc.directed, args);
 							
 							for (Edge edge: edges) {
 								if (compare.encloses(createPointcutRule(edge)) == null) {
@@ -467,11 +467,11 @@ public class DotWeaver extends Weaver {
 			// Search for all joinpoints in the source file.
 			
 			for (Graph graph: p.getGraphs()) {
-				TreeMap<Advice, ArrayList<Match>> advices = new TreeMap<Advice, ArrayList<Match>>(weaver.new AdviceComparator());
+				TreeMap<Advice, ArrayList<Match>> advices = new TreeMap<Advice, ArrayList<Match>>(Weaver.getAdviceOrderer());
 				
 				// Create a GraphPointcutRule.
 				{	
-					GraphPointcutRule jp = weaver.createPointcutRule(graph);
+					GraphPointcut jp = weaver.createPointcutRule(graph);
 					TreeMap<Advice, Match> execAdvices = weaver.executingAdvices(jp);
 					for (Advice advice: execAdvices.keySet()) {
 						ArrayList<Match> matches = new ArrayList <Match>();
@@ -487,7 +487,7 @@ public class DotWeaver extends Weaver {
 				
 				// Create a NodePointcutRule for each node.
 				for (Node node: graph.getNodes(false)) {
-					NodePointcutRule jp = weaver.createPointcutRule(node);
+					NodePointcut jp = weaver.createPointcutRule(node);
 					
 					TreeMap<Advice, Match> execAdvices = weaver.executingAdvices(jp);
 					for (Advice advice: execAdvices.keySet()) {
@@ -504,7 +504,7 @@ public class DotWeaver extends Weaver {
 				
 				// Create an EdgePointcutRule for each edge.
 				for (Edge edge: graph.getEdges()) {
-					EdgePointcutRule jp = weaver.createPointcutRule(edge);
+					EdgePointcut jp = weaver.createPointcutRule(edge);
 
 					TreeMap<Advice, Match> execAdvices = weaver.executingAdvices(jp);
 					for (Advice advice: execAdvices.keySet()) {

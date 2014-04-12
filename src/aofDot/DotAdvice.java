@@ -4,14 +4,14 @@ import java.util.ArrayList;
 
 import aof.Advice;
 import aof.Argument;
-import aof.PointcutRule;
+import aof.Pointcut;
 
 public class DotAdvice extends Advice {
 
 	final Action action;
-	final ArrayList<PointcutRule> body;
+	final ArrayList<Pointcut> body;
 	
-	public DotAdvice(String name, ArrayList<Argument> args, Action action, ArrayList<PointcutRule> stmts) {
+	public DotAdvice(String name, ArrayList<Argument> args, Action action, ArrayList<Pointcut> stmts) {
 		super(name, args);
 		
 		this.action = action;

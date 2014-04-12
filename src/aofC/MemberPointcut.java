@@ -5,20 +5,20 @@ import java.util.HashMap;
 
 import aof.Argument;
 import aof.Match;
-import aof.PointcutRule;
+import aof.Pointcut;
 
 // TODO: add comments.
-public class MemberPointcutRule extends PointcutRule {
+public class MemberPointcut extends Pointcut {
 	
 	// TODO: rename JoinPoint
 	public enum JoinPoint {
 		SET, GET
 	}
 	
-	// The type and name information are stored in the PointcutRule itself as argument!
+	// The type and name information are stored in the Pointcut itself as argument!
 	JoinPoint joinPoint;
 	
-	public MemberPointcutRule(JoinPoint jp, Argument arg) {
+	public MemberPointcut(JoinPoint jp, Argument arg) {
 		super(new ArrayList<Argument>(), null);
 		
 		assert (jp != null);
@@ -28,14 +28,14 @@ public class MemberPointcutRule extends PointcutRule {
 	}
 	
 	@Override
-	public Match encloses(PointcutRule rule) {
+	public Match encloses(Pointcut rule) {
 		assert (rule != null);
 		
-		if (!(rule instanceof MemberPointcutRule)) {
+		if (!(rule instanceof MemberPointcut)) {
 			return null;
 		}
 
-		MemberPointcutRule methodRule = (MemberPointcutRule) rule;
+		MemberPointcut methodRule = (MemberPointcut) rule;
 
 		// Check the joinpoint.
 		if (!(this.joinPoint.equals(methodRule.joinPoint))) {
@@ -66,11 +66,11 @@ public class MemberPointcutRule extends PointcutRule {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof MemberPointcutRule)) {
+		if (!(obj instanceof MemberPointcut)) {
 			return false;
 		}
 		
-		MemberPointcutRule mpcr = (MemberPointcutRule) obj;
+		MemberPointcut mpcr = (MemberPointcut) obj;
 		
 		// Compare names.
 		Argument thisArg = this.args.get(0);

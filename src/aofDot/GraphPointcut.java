@@ -4,14 +4,14 @@ import java.util.ArrayList;
 
 import aof.Argument;
 import aof.Match;
-import aof.PointcutRule;
+import aof.Pointcut;
 
-public class GraphPointcutRule extends PointcutRule {
+public class GraphPointcut extends Pointcut {
 
 	private String name;
-	private ArrayList<PointcutRule> body;
+	private ArrayList<Pointcut> body;
 	
-	public GraphPointcutRule(String name, ArrayList<PointcutRule> rules, ArrayList<Argument> args) {
+	public GraphPointcut(String name, ArrayList<Pointcut> rules, ArrayList<Argument> args) {
 		super(args, null);
 		
 		this.name = name;
@@ -19,24 +19,24 @@ public class GraphPointcutRule extends PointcutRule {
 	}
 
 	@Override
-	public Match encloses(PointcutRule rule) {
+	public Match encloses(Pointcut rule) {
 		assert (rule != null);
 
 		Match match = new Match();
 		
-		if (!(rule instanceof GraphPointcutRule)) {
+		if (!(rule instanceof GraphPointcut)) {
 			return null;
 		}
 
-		GraphPointcutRule gpc = (GraphPointcutRule) rule;
+		GraphPointcut gpc = (GraphPointcut) rule;
 		
 		// Check each rule of the body!
 		// Note that we reverse it, we will check for each rule in gpc every rule in this.
 		// This makes it possible that a rule in this covers multiple rules in gpc!
-		for (PointcutRule thatRule: gpc.body) {
+		for (Pointcut thatRule: gpc.body) {
 			boolean found = false;
 			
-			for (PointcutRule thisRule: this.body) {
+			for (Pointcut thisRule: this.body) {
 				Match map = thisRule.encloses(thatRule);
 				
 				if (map == null) {

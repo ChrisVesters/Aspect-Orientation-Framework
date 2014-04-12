@@ -24,9 +24,9 @@ import org.antlr.runtime.CommonTokenStream;
 import aof.Advice;
 import aof.Argument;
 import aof.Match;
-import aof.PointcutRule;
+import aof.Pointcut;
 import aof.Weaver;
-import aofC.MethodPointcutRule.JoinPoint;
+import aofC.MethodPointcut.JoinPoint;
 import aofC.AspectParser.AOCLexer;
 import aofC.AspectParser.AOCParser;
 import aofC.Cparser.ast.RootNode;
@@ -62,14 +62,14 @@ public class CWeaver extends Weaver {
 	private String generateForwardDecls() {
 		String result = new String();
 
-		for (PointcutRule pcr : Weaver.joinpoints) {
-			if (pcr instanceof MethodPointcutRule) {
-				MethodPointcutRule mpcr = (MethodPointcutRule) pcr;
+		for (Pointcut pcr : Weaver.joinpoints) {
+			if (pcr instanceof MethodPointcut) {
+				MethodPointcut mpcr = (MethodPointcut) pcr;
 
 				String wrap = mpcr.returnType + " " + mpcr.name;
-				if (mpcr.joinPoint == MethodPointcutRule.JoinPoint.CALL) {
+				if (mpcr.joinPoint == MethodPointcut.JoinPoint.CALL) {
 					wrap += "_call_(";
-				} else if (mpcr.joinPoint == MethodPointcutRule.JoinPoint.EXECUTE) {
+				} else if (mpcr.joinPoint == MethodPointcut.JoinPoint.EXECUTE) {
 					wrap += "_exec_(";
 				}
 
@@ -89,16 +89,16 @@ public class CWeaver extends Weaver {
 				wrap += "}\n\n";
 
 				result += wrap;
-			} else if (pcr instanceof MemberPointcutRule) {
-				MemberPointcutRule mpcr = (MemberPointcutRule) pcr;
+			} else if (pcr instanceof MemberPointcut) {
+				MemberPointcut mpcr = (MemberPointcut) pcr;
 
 				Argument arg = mpcr.getArgs()[0];
 				String wrap = new String();
-				if (mpcr.joinPoint == MemberPointcutRule.JoinPoint.SET) {
+				if (mpcr.joinPoint == MemberPointcut.JoinPoint.SET) {
 					wrap += "void " + arg.name + "_set_(" + arg.type
 							+ " _new_)";
 					wrap += "{\n}\n\n";
-				} else if (mpcr.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+				} else if (mpcr.joinPoint == MemberPointcut.JoinPoint.GET) {
 					wrap += arg.type + " " + arg.name + "_get_()";
 					wrap += "{\n";
 					wrap += "\t" + arg.type + " _result_;\n";
@@ -118,7 +118,7 @@ public class CWeaver extends Weaver {
 	}
 
 	// TODO: re-engineer
-	private String generateMemberAround(String name, MemberPointcutRule jp,
+	private String generateMemberAround(String name, MemberPointcut jp,
 			NavigableMap<Advice, Match> advices) {
 		// private String generateMemberAround(String name, MemberPointcutRule
 		// jp, NavigableMap<Advice, ArrayList<Argument>> advices) {
@@ -139,10 +139,10 @@ public class CWeaver extends Weaver {
 		Argument arg = jp.getArgs()[0];
 		String returnType = new String();
 		name += "_" + arg.name + "_(";
-		if (jp.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+		if (jp.joinPoint == MemberPointcut.JoinPoint.GET) {
 			// name += "_" + arg.name + "_get_(";
 			returnType = arg.type.toString();
-		} else if (jp.joinPoint == MemberPointcutRule.JoinPoint.SET) {
+		} else if (jp.joinPoint == MemberPointcut.JoinPoint.SET) {
 			// name += "_" + arg.name + "_set_(";
 			returnType = "void";
 		}
@@ -266,13 +266,13 @@ public class CWeaver extends Weaver {
 
 				result += "\t\t" + parts[0].substring(prevLine).trim() + " ";
 
-				if (jp.joinPoint == MemberPointcutRule.JoinPoint.SET) {
+				if (jp.joinPoint == MemberPointcut.JoinPoint.SET) {
 					if (proceedArgs.length > 0) {
 						result += arg.name + " = " + proceedArgs[0];
 					} else {
 						result += arg.name + " = " + args[0].name;
 					}
-				} else if (jp.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+				} else if (jp.joinPoint == MemberPointcut.JoinPoint.GET) {
 					if (proceedArgs.length > 0) {
 						result += proceedArgs[0];
 					} else {
@@ -318,7 +318,7 @@ public class CWeaver extends Weaver {
 
 	// TODO: re-engineer
 	private String generateFunctionArround(String funcName,
-			MethodPointcutRule jp, NavigableMap<Advice, Match> advices) {
+			MethodPointcut jp, NavigableMap<Advice, Match> advices) {
 		// private String generateFunctionArround(String funcName,
 		// MethodPointcutRule jp,
 		// NavigableMap<Advice, ArrayList<Argument>> advices) {
@@ -513,7 +513,7 @@ public class CWeaver extends Weaver {
 	}
 
 	// TODO: re-engineer?
-	private String generateMemberWrapper(String varName, MemberPointcutRule jp,
+	private String generateMemberWrapper(String varName, MemberPointcut jp,
 			NavigableMap<Advice, Match> advices) {
 		// private String generateMemberWrapper(String varName,
 		// MemberPointcutRule jp,
@@ -522,9 +522,9 @@ public class CWeaver extends Weaver {
 
 		// Write the function signature of the wrapper.
 		Argument arg = jp.getArgs()[0];
-		if (jp.joinPoint == MemberPointcutRule.JoinPoint.SET) {
+		if (jp.joinPoint == MemberPointcut.JoinPoint.SET) {
 			result += "void " + varName + "(" + arg.type + " _new_) {\n";
-		} else if (jp.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+		} else if (jp.joinPoint == MemberPointcut.JoinPoint.GET) {
 			result += arg.type + " " + varName + "() {\n";
 			// Before calling the advices, prepare a variable.
 			result += "\t" + arg.type + " _result_;\n";
@@ -548,7 +548,7 @@ public class CWeaver extends Weaver {
 				// If get, use the original value!
 				// If set, use the setted value!
 				if (args.size() == 1) {
-					if (jp.joinPoint == MemberPointcutRule.JoinPoint.SET) {
+					if (jp.joinPoint == MemberPointcut.JoinPoint.SET) {
 						callArgs += "_new_";
 					} else {
 						Argument adArg = cadvice.getParams()[0];
@@ -568,7 +568,7 @@ public class CWeaver extends Weaver {
 				// case of get, it won't!
 				Argument[] args = jp.getArgs();
 				if (args.length == 1) {
-					if (jp.joinPoint == MemberPointcutRule.JoinPoint.SET) {
+					if (jp.joinPoint == MemberPointcut.JoinPoint.SET) {
 						callArgs += "_new_";
 					} else {
 						callArgs += args[0].name;
@@ -585,7 +585,7 @@ public class CWeaver extends Weaver {
 				advices = (NavigableMap<Advice, Match>) advices.headMap(advice);
 
 				result += "\t";
-				if (jp.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+				if (jp.joinPoint == MemberPointcut.JoinPoint.GET) {
 					result += "_result_ = ";
 				}
 				result += cadvice.getName() + "_" + arg.name + "_" + callArgs;
@@ -597,9 +597,9 @@ public class CWeaver extends Weaver {
 
 		if (toCall) {
 			// Add the body.
-			if (jp.joinPoint == MemberPointcutRule.JoinPoint.SET) {
+			if (jp.joinPoint == MemberPointcut.JoinPoint.SET) {
 				result += "\t" + arg.name + " = _new_;\n";
-			} else if (jp.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+			} else if (jp.joinPoint == MemberPointcut.JoinPoint.GET) {
 				result += "\t_result_ = " + arg.name + ";\n";
 			}
 		}
@@ -623,7 +623,7 @@ public class CWeaver extends Weaver {
 			// For set, the original name will always be updated, in the case of
 			// get, it won't!
 			if (args.size() == 1) {
-				if (jp.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+				if (jp.joinPoint == MemberPointcut.JoinPoint.GET) {
 					call += "_result_";
 				} else {
 					Argument adArg = cadvice.getParams()[0];
@@ -638,7 +638,7 @@ public class CWeaver extends Weaver {
 		}
 
 		// Return the stored value.
-		if (jp.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+		if (jp.joinPoint == MemberPointcut.JoinPoint.GET) {
 			result += "\treturn _result_;\n";
 		}
 
@@ -649,7 +649,7 @@ public class CWeaver extends Weaver {
 
 	// TODO: re-engineer
 	private String generateFunctionWrapper(String funcName,
-			MethodPointcutRule jp, NavigableMap<Advice, Match> advices) {
+			MethodPointcut jp, NavigableMap<Advice, Match> advices) {
 		// private String generateFunctionWrapper(String funcName,
 		// MethodPointcutRule jp,
 		// NavigableMap<Advice, ArrayList<Argument>> advices) {
@@ -839,30 +839,30 @@ public class CWeaver extends Weaver {
 		}
 
 		// Generate all wrappers
-		for (PointcutRule pcr : Weaver.joinpoints) {
-			if (pcr instanceof MethodPointcutRule) {
-				MethodPointcutRule mpcr = (MethodPointcutRule) pcr;
+		for (Pointcut pcr : Weaver.joinpoints) {
+			if (pcr instanceof MethodPointcut) {
+				MethodPointcut mpcr = (MethodPointcut) pcr;
 
 				// Determine the wrapper name.
 				String wrapperName = mpcr.name;
-				if (mpcr.joinPoint == MethodPointcutRule.JoinPoint.CALL) {
+				if (mpcr.joinPoint == MethodPointcut.JoinPoint.CALL) {
 					wrapperName += "_call_";
-				} else if (mpcr.joinPoint == MethodPointcutRule.JoinPoint.EXECUTE) {
+				} else if (mpcr.joinPoint == MethodPointcut.JoinPoint.EXECUTE) {
 					wrapperName += "_exec_";
 				}
 
 				// Now start adding the body of the wrapper.
 				TreeMap<Advice, Match> advices = executingAdvices(pcr);
 				result += generateFunctionWrapper(wrapperName, mpcr, advices);
-			} else if (pcr instanceof MemberPointcutRule) {
-				MemberPointcutRule mpcr = (MemberPointcutRule) pcr;
+			} else if (pcr instanceof MemberPointcut) {
+				MemberPointcut mpcr = (MemberPointcut) pcr;
 
 				// Determine the wrapper name.
 				Argument arg = mpcr.getArgs()[0];
 				String wrapperName = new String();
-				if (mpcr.joinPoint == MemberPointcutRule.JoinPoint.SET) {
+				if (mpcr.joinPoint == MemberPointcut.JoinPoint.SET) {
 					wrapperName += arg.name + "_set_";
-				} else if (mpcr.joinPoint == MemberPointcutRule.JoinPoint.GET) {
+				} else if (mpcr.joinPoint == MemberPointcut.JoinPoint.GET) {
 					wrapperName += arg.name + "_get_";
 				}
 

@@ -3,33 +3,33 @@ package aof;
 import java.util.ArrayList;
 
 // TODO: add comments
-public class Pointcut {
+public abstract class Pointcut {
 
-	// What should we put here?
-	private final String name;
-	private final ArrayList<PointcutRule> rules;
-	private final ArrayList<Argument> args;
+	// A Pointcut contains arguments.
+	// It should even contain all arguments present in the PointcutSet.
+	protected final ArrayList<Argument> args;
+	protected final Context context;
 
-	public Pointcut(String name, ArrayList<Argument> args,
-			ArrayList<PointcutRule> rules) {
-		assert ((name != null) && (name.trim() != ""));
+	public Pointcut(ArrayList<Argument> args, Context context) {
 		assert (args != null);
-		assert (rules != null);
 
-		this.name = name;
 		this.args = args;
-		this.rules = rules;
-	}
-
-	public String getName() {
-		return this.name;
+		this.context = context;
 	}
 
 	public Argument[] getArgs() {
 		return this.args.toArray(new Argument[0]);
 	}
 
-	public PointcutRule[] getRules() {
-		return this.rules.toArray(new PointcutRule[0]);
-	}
+	/**
+	 * 
+	 * This method will generate a match between this pointcutrule and the
+	 * specified one.
+	 * 
+	 * @param rule
+	 *            The rule we want to create a match for.
+	 * @return A match if this rule encloses the specified one, null otherwise.
+	 * 
+	 **/
+	public abstract Match encloses(Pointcut rule);
 }

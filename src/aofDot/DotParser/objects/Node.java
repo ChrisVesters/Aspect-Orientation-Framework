@@ -22,8 +22,6 @@ package aofDot.DotParser.objects;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-import aof.Type;
-
 /**
  * This class represents a node in a graph.
  * 

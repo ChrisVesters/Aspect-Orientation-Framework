@@ -5,24 +5,24 @@ import java.util.HashMap;
 
 import aof.Argument;
 import aof.Match;
-import aof.PointcutRule;
+import aof.Pointcut;
 import aofC.Cparser.symbolTable.CType;
 import aofC.Cparser.symbolTable.AnyType;
 
 // TODO: add comments.
-public class MethodPointcutRule extends PointcutRule {
+public class MethodPointcut extends Pointcut {
 	
 	// TODO: rename JoinPoint
 	public enum JoinPoint {
 		CALL, EXECUTE
 	}
 	
-	// The methodSignature does not have arguments, because these are present in the PointcutRule itself!
+	// The methodSignature does not have arguments, because these are present in the Pointcut itself!
 	JoinPoint joinPoint;
 	CType returnType;
 	String name;
 	
-	public MethodPointcutRule(JoinPoint jp, CType returnType, String name, ArrayList<Argument> args) {
+	public MethodPointcut(JoinPoint jp, CType returnType, String name, ArrayList<Argument> args) {
 		super (args, null);
 		
 		assert (jp != null);
@@ -35,14 +35,14 @@ public class MethodPointcutRule extends PointcutRule {
 	}
 	
 	//@Override
-	public Match encloses(PointcutRule rule) {
+	public Match encloses(Pointcut rule) {
 		assert (rule != null);
 		
-		if (!(rule instanceof MethodPointcutRule)) {
+		if (!(rule instanceof MethodPointcut)) {
 			return null;
 		}
 		
-		MethodPointcutRule methodRule = (MethodPointcutRule) rule;
+		MethodPointcut methodRule = (MethodPointcut) rule;
 		
 		// Check the joinpoint.
 		if (!(this.joinPoint.equals(methodRule.joinPoint))) {
@@ -113,11 +113,11 @@ public class MethodPointcutRule extends PointcutRule {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof MethodPointcutRule)) {
+		if (!(obj instanceof MethodPointcut)) {
 			return false;
 		}
 		
-		MethodPointcutRule mpcr = (MethodPointcutRule) obj;
+		MethodPointcut mpcr = (MethodPointcut) obj;
 		
 		// Compare names.
 		if (!this.name.equals(mpcr.name)) {

@@ -5,27 +5,27 @@ import java.util.HashMap;
 
 import aof.Argument;
 import aof.Match;
-import aof.PointcutRule;
+import aof.Pointcut;
 
-public class NodePointcutRule extends PointcutRule {
+public class NodePointcut extends Pointcut {
 
 	public final String name;
 	
-	public NodePointcutRule(String name, ArrayList<Argument> args) {
+	public NodePointcut(String name, ArrayList<Argument> args) {
 		super(args, null);
 		
 		this.name = name;
 	}
 
 	@Override
-	public Match encloses(PointcutRule rule) {
+	public Match encloses(Pointcut rule) {
 		assert (rule != null);
 		
-		if (!(rule instanceof NodePointcutRule)) {
+		if (!(rule instanceof NodePointcut)) {
 			return null;
 		}
 		
-		NodePointcutRule npc = (NodePointcutRule) rule;
+		NodePointcut npc = (NodePointcut) rule;
 		
 		// Compare the names.
 		String regex = this.name.replace("..", ".*");

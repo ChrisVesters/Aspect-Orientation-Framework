@@ -45,7 +45,7 @@
 \mainbodypages
 
 \chapter{Introduction}
-\section*{Aspect Oriented Programming}
+\section{Aspect Oriented Programming}
 Aspect oriented programming (from now on referred to as AOP) is a way of programming that allows separating code beyond the capabilities of object oriented programming. It allows the separation of cross cutting concerns from the core concerns, by doing this we achieve more modular code, prevent code tangling and code scattering which results in code that is easier to maintain and modify.
 \begin{figure}[h!]
 \centering
@@ -66,12 +66,12 @@ In the end everything has to come together, this is done by the weaver.\\
 The most known AOP language by far is AspectJ, which is an extension of Java. To demonstrate the concept of AOP a couple of AspectJ examples are shown here:\\
 TODO: EXAMPLES!\\
 
-\section*{Problem}
+\section{Problem}
 Currently AOP is often implemented by extending an existing language, this often leads to completely new languages requiring new compilers and  breaking existing tools for the base language. Especially the latter is a reason why some people haven't made the step to start working with aspect oriented languages.\\
 \\
 Though the concepts of AOP are quite general, which is reflected by the similarities in different aspect oriented languages, all the AOP parts of these languages were written from scratch. The main reason for this is the absence of a general language independent library or framework to handle aspect orientation. Another reasons is that by building a language from scratch you get more freedom to implement the desired features.
 
-\section*{Goal}
+\section{Goal}
 The goal of this thesis is to build a framework that encloses all core ideas of AOP in an abstract manner without being specific about a particular base language. This will enable use to use the framework to develop an aspect oriented language quicker and easier than currently is the case by extending a couple of parts. The framework will work for completely new languages, and existing ones we want to extend. The latter one will pose the most problems as the freedom to adapt the compiler is very limited. (TODO: add in a later section the idea of injecting the code into a compiler with AspectJ)
 
 \chapter{Aspect Oriented Language Components}
@@ -94,6 +94,79 @@ With the components specified above we are perfectly possible to create an aspec
 An overview of all the components and how they are linked together is shown in figure (TODO:REF). The weaver is not considered to be part of the aspect language just as a compiler is not considered a part of the language.
 
 \chapter{Aspect Oriented Framework}
+Since the framework has the be easily extensible to work with any kind of language it has to be very abstract and may not contain any information about a base language. On the other hand, creating a framework that is too abstract and general requires too many additions to be made to implement it for a base language, making the framework completely missing its goal. The level of abstraction has to be well considered.\\
+\\
+I will first go into detail how the components that were identified in the previous chapter are represented and work in the framework. The explanation of the weaver is preceded by some information that is required to fully understand how the weaver works. This is followed by some remarks about the current version of the framework, and to conclude the chapter I explain how we can now expand this framework to work with any base language.\\
+\\
+The first component of the aspect language that we identified were the pointcuts. This component is implemented as an abstract class Pointcut, to completely specify a join point we need some way to identify it's signature, this however is language specific and can therefore not be provided by the framework. Other common structures are arguments and context. The arguments are meant for information that can be used in the advice, while the context is a way to restrict matching join points based on  information that goes beyond the scope of the join point.\\
+\\
+Something we notice, which is also the case for AspectJ, is that it is not possible to identify completely different join points with one pointcut. This complicates writing advice that has to be executed on these two different sets of join points. To simplify this we allow grouping pointcuts into sets, this is implemented as a PointcutSet, which has a set of pointcuts, arguments that are available for the advice, and should be present in all the poincuts of the set, and a name so we can link the advice to this pointcut. (TODO: add diagram)\\
+\\
+The advices are implemented by the abstract Advice class. This class has a name (String), which will make ordering them a lot easier, and a set of arguments (Argument), these arguments are the ones that can be used inside the advice body. Note that the arguments of the pointcut to which this advice is linked must be assignable to these arguments. The body or actual code of the advice is not provided by this class, simply because it depends on the base language as we want this to be in the same formalism. (TODO: add diagram)\\
+\\
+Before going any further some more explanation about some already mentioned concepts is required. I have talked about arguments and a context, but didn't mention what these are. A context is the easiest, since  the context can be anything and highly depends on the base language the only thing the framework provides is an interface Context. An argument is a bit harder, every base language has its own vision of what an argument is, though two concepts are very common, being a name and a type. For this reason the Argument class has a name, which is also required for access to the argument and a type. The type however can not be a base language type, but should be more general. For this reason an interface called Type was created.\\
+\\
+This being said we can now discuss the remaining components being: the order mechanism, the aspect and the weaver. The components will be handled in the order they are specified here.\\
+\\
+The framework does not provide a basis for the ordering. This means that the user is free to implement the way of specifying an ordering as he likes. The user is also free to choose whether the order will be specified on the pointcuts or on the advice. Despite the freedom on the ordering 'language' the ordering itself is still limited. This will be discussed into more detail once the weaver is introduced.\\
+\\
+The current version of the framework does not provide any concept of 'aspects', though this causes some limitations, it does not make the framework useless. Some of the limitations were already mentioned in the previous chapter, more details about the consequences of the absence of an encapsulating aspect is discussed at the end of this chapter.\\
+\\
+Before discussing the weaver we have to make some things a bit clearer. You might be wondering how the join points will be extracted from the source code. This is done by the parser of the base language, or a modification of it. The join points that are generated by this parser will actually be instances of the Pointcut class. By doing this comparing whether a pointcut set contains a pointcut that matches the joinpoint becomes trivial.\\
+\\
+Something you might have noticed is that the advice does not keep a link to the pointcut itself, nor the other way around. The link between pointcut and advices is handled by the weaver, this allows a better separation between pointcuts and advices and gives the weaver more freedom to operate.\\
+\\
+The ordering mechanism requires some extra information as well, I mentioned earlier that despite the freedom some limitations still exist. This is cause by the way the weaver handles the ordering internally. The weaver will keep a list for every advice to its preceding advices. This means that the ordering provided to the weaver has to be on the advices, and should result in a partial ordering (TODO: add image)\\
+\\
+A final remark that has to be made is how the framework handles the argument mapping from adivce to pointcut and join point. For this the framework provides a Match class that contains a map from one argument to another. (TODO: add image) This allows us to specify a mapping between arguments, which will be used to eventually translate the arguments of an advice to that of the join point.\\
+\\
+This brings us to the last component, the weaver. Just like most elements in the framework is the weaver implemented as an abstract class. This abstract class provides a way for all components to register their information, which is then stored to be processed. They way in which the information can be processed depends both on the base language and the possibilities of the base language parser and can therefor not be implemented by the framework. The framework does however provide a way to specify the input and output files by using flags, an overview of these flags can be seen in (TODO:REF).
+\begin{table}[h]
+\centering
+\begin{tabular}{l l}
+-a \textit{files} & Specify the aspect files.\\ [2ex]
+-s \textit{files} & Specify the source files.\\ [2ex]
+-oDir \textit{dir} & Specify an output directory (optionally).\\
+\end{tabular}
+\caption[tab:Flags]{An overview of the flags available in the weaver.}
+\label{tab:Flags}
+\end{table}\\
+Besides that it also provides some methods that simplify processing the information. The most important one is 'executingAdvices', given a certain joinpoint this method will return all the advices that have to be executed in the order they are returned. In case the user needs to know the pointcuts that match a certain joinpoint a method 'enclosingPointcuts' is provided. The framework also implements a way to compare advices based on the partial ordering, this is done by the AdviceComparator which is an extension of the Comparator. This is meant for internal usage and the user should not need to use this since the return value of the 'executingAdvices' method is already ordered. (TODO: add image)\\
+\\
+A complete overview of the framework and how everything is connected can be seen in figure (TODO: REF).\\
+TODO: add image\\
+TODO: some remarks about this?\\
+\\
+Some trade offs had to be made when designing the framework, it are these trade off that I now discuss into more detail. First of all it needs to be noted that both Context and Type are interfaces which both specify only one method called 'isAssignable'. This means that Context and Type, though called different, do the same thing. We could use one general interface, this is not done though to be able to handle future evolution.\\
+\\
+Adding a notion of aspect would allow a lot of nice features such as adding members that can be used for communication between advice and inheritance. They could also be used as a way to encapsulate pointcuts and advice, though this can also be done without aspects simply by separating them over multiple files.\\
+Adding aspects to the framework would have introduced a lot of extra complexity. Since the goal of this thesis is to demonstrate the usability of such a framework I have chosen to not include this, but keep it as a future work.\\
+\\
+The framework uses an abstract notion of type, this is to achieve the level abstraction required to separate the framework from the base language. This however means that for each base language we need a new type system that implements the Type interface, which might result in a lot of work. Sometimes it is however possible to use the same type system the compiler of the base language uses if we can add the interface to it.\\
+\\
+The advice and pointcuts are not directly connected with each other, the connection is achieved by the weaver. Because adding an explicit link does not provide any advantages, I have chosen to do it this way to ensure that the components are as loosely coupled as possible. Nevertheless the framework demands that at the moment a pointcut is added the pointcut set it is linked with must be be known to the compiler.\\
+\\
+Something that was not discussed so far is what happens if a join point is encountered that is matched by multiple pointcuts in the same pointcut set. In this case there basically are two options: either we execute the advices for each matched pointcut, or we only select the first matched pointcut of the set. Currently the latter is implemented in the framework, mostly because if we still want the first to happen, we can simply split the pointcut set.\\
+\\
+One final remark that has to be made is that implementing both join points and poincuts as the same Class can be dangerous since they are not the same. One example is that poincuts can contain wildcards wile join points should not. It may also be feasible to allow specifying types and sub-types in pointcuts, where in the join point the types are fixed and known. This means that we have to use the Poincut class carefully if we use it with a join point.\\
+\\
+(TODO: can we ommit the context type and just add all this stuff as arguments?)\\
+\\
+To conclude this chapter I will briefly explain how the framework can be expanded to work with a base language, for more detailed examples I refer to chapters (TODO: REF) where the framework is expanded for two different languages. Before being able to use the framework you have to specify a language in which it is possible to specify pointcuts, advice and optionally an order. You have to provide a parser for this language, it is this parser that will create the pointcuts and advices which are handed over to the weaver.\\
+\\
+The pointcuts and advice that has to be created has to be specific for the base language, this means that you first have to create a subclass of Advice and one or more subclasses for Pointcut.
+The advice subclass is simple, it must contain the body of the advice. The pointcuts need to contain all information to identify a join point. Since there will be multiple types of pointcuts you will have to implement one subclass for each type of pointcut. If you desire to add a context to the pointcut, you still have to create a class with the Context interface that contains all the context information you want to use.\\
+\\
+The pointcuts and advices ofcourse require you to implement a type system. Depending on the availability of the type system used by the base language, and more precise the compiler, it is possible to add small modifications to get the type system without much work. If not, this might be a bigger problem.\\
+\\
+Now you can create pointcuts and advice you still need to expand the Weaver class to add the actual weaving. Since the framework gives you the advices to execute for each join point all the extended weaver has to do is execute these advices at those times. This sounds easier than it sometimes is though, especially the way of how you can interact with the base language is important. (TODO: overview of interaction between languages and weaver)\\
+\\
+I know this sounds vague and very abstract, which is why I refer to chapters (REF) again since they contain worked out examples.\\
+
+TODO: explain how to extend the framework!\\
+\\
+\\
+// Old version:\\
 The constructed framework provides a basis for all compontents using several classes such as Pointcut, PointcutRule, Context, Advice and Weaver. (TODO: change names of Pointcut to PointcutSet and PointcutRule to Pointcut) (TODO: Add class diagram!)\\
 \\
 A pointcut can have multiple rules, it are these rules that will match with a join point. To easily compare these rules and a join point, both are specified in the same way (as a PointcutRule). Though this results in situations where we have to be careful.\\

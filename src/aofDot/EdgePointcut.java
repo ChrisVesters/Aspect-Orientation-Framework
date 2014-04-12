@@ -3,15 +3,15 @@ package aofDot;
 import java.util.ArrayList;
 import aof.Argument;
 import aof.Match;
-import aof.PointcutRule;
+import aof.Pointcut;
 
-public class EdgePointcutRule extends PointcutRule {
+public class EdgePointcut extends Pointcut {
 
-	public final NodePointcutRule source;
-	public final NodePointcutRule target;
+	public final NodePointcut source;
+	public final NodePointcut target;
 	public final boolean directed;
 
-	public EdgePointcutRule(NodePointcutRule source, NodePointcutRule target,
+	public EdgePointcut(NodePointcut source, NodePointcut target,
 			boolean dir, ArrayList<Argument> args) {
 		super(args, null);
 
@@ -21,16 +21,16 @@ public class EdgePointcutRule extends PointcutRule {
 	}
 
 	@Override
-	public Match encloses(PointcutRule rule) {
+	public Match encloses(Pointcut rule) {
 		assert (rule != null);
 
 		Match match = new Match();
 		
-		if (!(rule instanceof EdgePointcutRule)) {
+		if (!(rule instanceof EdgePointcut)) {
 			return null;
 		}
 
-		EdgePointcutRule epc = (EdgePointcutRule) rule;
+		EdgePointcut epc = (EdgePointcut) rule;
 
 		// Check the source and target node.
 		Match sourceMatch = this.source.encloses(epc.source);

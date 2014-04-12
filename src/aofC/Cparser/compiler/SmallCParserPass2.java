@@ -6,12 +6,12 @@ import org.antlr.runtime.*;
 
 import aof.Advice;
 import aof.Argument;
+import aof.PointcutSet;
 import aof.Pointcut;
-import aof.PointcutRule;
 import aof.Weaver;
 import aofC.CAdvice;
 import aofC.CWeaver;
-import aofC.MethodPointcutRule;
+import aofC.MethodPointcut;
 import aofC.Moment;
 import aofC.Cparser.ast.*;
 import aofC.Cparser.ast.OperatorNode.Operator;

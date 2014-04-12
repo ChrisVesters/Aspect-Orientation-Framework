@@ -573,7 +573,7 @@ public class AOCParser extends Parser {
 	public final void pointcut() throws RecognitionException {
 		Token NAME2=null;
 		ArrayList<Argument> args3 =null;
-		ArrayList<PointcutRule> rules4 =null;
+		ArrayList<Pointcut> rules4 =null;
 
 		try {
 			// src/aofC/AspectParser/AOC.g:95:3: ( 'pointcut' WS NAME ( WS )? '(' args ')' ( WS )? '{' rules '}' )
@@ -633,7 +633,7 @@ public class AOCParser extends Parser {
 			match(input,29,FOLLOW_29_in_pointcut326); 
 
 			      // TODO: check only named arguments.
-			      Pointcut pc = new Pointcut(NAME2.getText(), args3, rules4);
+			      PointcutSet pc = new PointcutSet(NAME2.getText(), args3, rules4);
 			      Weaver.addPointcut(pc);
 			    
 			}
@@ -653,12 +653,12 @@ public class AOCParser extends Parser {
 
 	// $ANTLR start "rules"
 	// src/aofC/AspectParser/AOC.g:108:1: rules returns [ArrayList<PointcutRule> pcs = new ArrayList<PointcutRule>()] : ( WS | ( method ) | ( member ) )* ;
-	public final ArrayList<PointcutRule> rules() throws RecognitionException {
-		ArrayList<PointcutRule> pcs =  new ArrayList<PointcutRule>();
+	public final ArrayList<Pointcut> rules() throws RecognitionException {
+		ArrayList<Pointcut> pcs =  new ArrayList<Pointcut>();
 
 
-		MethodPointcutRule method5 =null;
-		MemberPointcutRule member6 =null;
+		MethodPointcut method5 =null;
+		MemberPointcut member6 =null;
 
 		try {
 			// src/aofC/AspectParser/AOC.g:109:3: ( ( WS | ( method ) | ( member ) )* )
@@ -748,8 +748,8 @@ public class AOCParser extends Parser {
 
 	// $ANTLR start "member"
 	// src/aofC/AspectParser/AOC.g:114:1: member returns [MemberPointcutRule pc] : ( ( 'set' ) | ( 'get' ) ) WS type WS NAME ( WS )? ';' ;
-	public final MemberPointcutRule member() throws RecognitionException {
-		MemberPointcutRule pc = null;
+	public final MemberPointcut member() throws RecognitionException {
+		MemberPointcut pc = null;
 
 
 		Token NAME7=null;
@@ -759,7 +759,7 @@ public class AOCParser extends Parser {
 			// src/aofC/AspectParser/AOC.g:115:3: ( ( ( 'set' ) | ( 'get' ) ) WS type WS NAME ( WS )? ';' )
 			// src/aofC/AspectParser/AOC.g:115:5: ( ( 'set' ) | ( 'get' ) ) WS type WS NAME ( WS )? ';'
 			{
-			MemberPointcutRule.JoinPoint joinPoint = null;
+			MemberPointcut.JoinPoint joinPoint = null;
 			// src/aofC/AspectParser/AOC.g:116:5: ( ( 'set' ) | ( 'get' ) )
 			int alt18=2;
 			int LA18_0 = input.LA(1);
@@ -784,7 +784,7 @@ public class AOCParser extends Parser {
 					// src/aofC/AspectParser/AOC.g:116:7: 'set'
 					{
 					match(input,27,FOLLOW_27_in_member396); 
-					joinPoint = MemberPointcutRule.JoinPoint.SET;
+					joinPoint = MemberPointcut.JoinPoint.SET;
 					}
 
 					}
@@ -796,7 +796,7 @@ public class AOCParser extends Parser {
 					// src/aofC/AspectParser/AOC.g:117:8: 'get'
 					{
 					match(input,24,FOLLOW_24_in_member408); 
-					joinPoint = MemberPointcutRule.JoinPoint.GET;
+					joinPoint = MemberPointcut.JoinPoint.GET;
 					}
 
 					}
@@ -830,7 +830,7 @@ public class AOCParser extends Parser {
 			match(input,15,FOLLOW_15_in_member429); 
 
 			      Argument arg = new Argument(NAME7.getText(), type8);
-			      pc = new MemberPointcutRule(joinPoint, arg);
+			      pc = new MemberPointcut(joinPoint, arg);
 			    
 			}
 
@@ -850,8 +850,8 @@ public class AOCParser extends Parser {
 
 	// $ANTLR start "method"
 	// src/aofC/AspectParser/AOC.g:124:1: method returns [MethodPointcutRule pc] : ( ( 'call' ) | ( 'execute' ) ) WS type WS NAME ( WS )? '(' args ')' ( WS )? ';' ;
-	public final MethodPointcutRule method() throws RecognitionException {
-		MethodPointcutRule pc = null;
+	public final MethodPointcut method() throws RecognitionException {
+		MethodPointcut pc = null;
 
 
 		Token NAME10=null;
@@ -862,7 +862,7 @@ public class AOCParser extends Parser {
 			// src/aofC/AspectParser/AOC.g:125:3: ( ( ( 'call' ) | ( 'execute' ) ) WS type WS NAME ( WS )? '(' args ')' ( WS )? ';' )
 			// src/aofC/AspectParser/AOC.g:125:5: ( ( 'call' ) | ( 'execute' ) ) WS type WS NAME ( WS )? '(' args ')' ( WS )? ';'
 			{
-			MethodPointcutRule.JoinPoint joinPoint = null;
+			MethodPointcut.JoinPoint joinPoint = null;
 			// src/aofC/AspectParser/AOC.g:126:5: ( ( 'call' ) | ( 'execute' ) )
 			int alt20=2;
 			int LA20_0 = input.LA(1);
@@ -887,7 +887,7 @@ public class AOCParser extends Parser {
 					// src/aofC/AspectParser/AOC.g:126:7: 'call'
 					{
 					match(input,22,FOLLOW_22_in_method457); 
-					joinPoint = MethodPointcutRule.JoinPoint.CALL;
+					joinPoint = MethodPointcut.JoinPoint.CALL;
 					}
 
 					}
@@ -899,7 +899,7 @@ public class AOCParser extends Parser {
 					// src/aofC/AspectParser/AOC.g:127:8: 'execute'
 					{
 					match(input,23,FOLLOW_23_in_method469); 
-					joinPoint = MethodPointcutRule.JoinPoint.EXECUTE;
+					joinPoint = MethodPointcut.JoinPoint.EXECUTE;
 					}
 
 					}
@@ -954,7 +954,7 @@ public class AOCParser extends Parser {
 
 			match(input,15,FOLLOW_15_in_method499); 
 
-			      pc = new MethodPointcutRule(joinPoint, type9, NAME10.getText(), args11);
+			      pc = new MethodPointcut(joinPoint, type9, NAME10.getText(), args11);
 			    
 			}
 

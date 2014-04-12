@@ -6,13 +6,13 @@ import org.antlr.runtime.*;
 
 import aof.Advice;
 import aof.Argument;
+import aof.PointcutSet;
 import aof.Pointcut;
-import aof.PointcutRule;
 import aof.Weaver;
 import aofC.CAdvice;
 import aofC.CWeaver;
-import aofC.MemberPointcutRule;
-import aofC.MethodPointcutRule;
+import aofC.MemberPointcut;
+import aofC.MethodPointcut;
 import aofC.Moment;
 import aofC.Cparser.ast.*;
 import aofC.Cparser.ast.OperatorNode.Operator;
@@ -1038,11 +1038,11 @@ public class SmallCParserPass1 extends Parser {
 						}
 
 						// We let the weaver know that we encountered this joinpoint!
-						MethodPointcutRule funcExec = new MethodPointcutRule(MethodPointcutRule.JoinPoint.EXECUTE, retType, fName, argsType);
+						MethodPointcut funcExec = new MethodPointcut(MethodPointcut.JoinPoint.EXECUTE, retType, fName, argsType);
 						Weaver.addJoinpoint(funcExec);
 
 						// Note: it is not certain that this joinpoint will ever occur!
-						MethodPointcutRule funcCall = new MethodPointcutRule(MethodPointcutRule.JoinPoint.CALL, retType, fName, argsType);
+						MethodPointcut funcCall = new MethodPointcut(MethodPointcut.JoinPoint.CALL, retType, fName, argsType);
 						Weaver.addJoinpoint(funcCall);
 						
 						///////////////////////////////////////////////////////////
@@ -2261,11 +2261,11 @@ public class SmallCParserPass1 extends Parser {
 						Argument arg = new Argument(vName, type);
 
 						// We let the weaver know that we encountered this joinpoint!
-						MemberPointcutRule varSet = new MemberPointcutRule(MemberPointcutRule.JoinPoint.SET, arg);
+						MemberPointcut varSet = new MemberPointcut(MemberPointcut.JoinPoint.SET, arg);
 						Weaver.addJoinpoint(varSet);
 
 						// Note: it is not certain that this joinpoint will ever occur!
-						MemberPointcutRule varGet = new MemberPointcutRule(MemberPointcutRule.JoinPoint.GET, arg);
+						MemberPointcut varGet = new MemberPointcut(MemberPointcut.JoinPoint.GET, arg);
 						Weaver.addJoinpoint(varGet);
 					}
 					

@@ -2,7 +2,6 @@ package aofDot;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import org.junit.After;
 import org.junit.Test;
 
-import aofC.CWeaver;
 import aofDot.DotParser.Parser;
 import aofDot.DotParser.objects.Edge;
 import aofDot.DotParser.objects.Graph;

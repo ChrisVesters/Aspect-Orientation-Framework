@@ -323,7 +323,7 @@ public class AODotParser extends Parser {
 		Token aname=null;
 		Token pname=null;
 		ArrayList<Argument> args1 =null;
-		ArrayList<PointcutRule> rules2 =null;
+		ArrayList<Pointcut> rules2 =null;
 
 		try {
 			// src/aofDot/AspectParser/AODot.g:45:3: ( ( 'advice' WS aname= NAME ( WS )? ':' ( WS )? )? ( ( 'insert' ) | ( 'delete' ) ) WS pname= NAME ( WS )? '(' args ')' ( WS )? '{' rules '}' )
@@ -503,7 +503,7 @@ public class AODotParser extends Parser {
 	public final void pointcut() throws RecognitionException {
 		Token pname=null;
 		ArrayList<Argument> args3 =null;
-		ArrayList<PointcutRule> rules4 =null;
+		ArrayList<Pointcut> rules4 =null;
 
 		try {
 			// src/aofDot/AspectParser/AODot.g:66:3: ( 'pointcut' WS pname= NAME ( WS )? '(' args ')' ( WS )? '{' rules '}' )
@@ -558,7 +558,7 @@ public class AODotParser extends Parser {
 			match(input,32,FOLLOW_32_in_pointcut285); 
 
 			     
-			      Pointcut pc = new Pointcut(pname.getText(), args3, rules4);
+			      PointcutSet pc = new PointcutSet(pname.getText(), args3, rules4);
 			      Weaver.addPointcut(pc);
 			    
 			}
@@ -729,13 +729,13 @@ public class AODotParser extends Parser {
 
 	// $ANTLR start "rules"
 	// src/aofDot/AspectParser/AODot.g:80:1: rules returns [ArrayList<PointcutRule> pcs = new ArrayList<PointcutRule>()] : ( WS | ( graph ) | ( node ';' ) | ( edge ';' ) )* ;
-	public final ArrayList<PointcutRule> rules() throws RecognitionException {
-		ArrayList<PointcutRule> pcs =  new ArrayList<PointcutRule>();
+	public final ArrayList<Pointcut> rules() throws RecognitionException {
+		ArrayList<Pointcut> pcs =  new ArrayList<Pointcut>();
 
 
-		GraphPointcutRule graph5 =null;
-		NodePointcutRule node6 =null;
-		EdgePointcutRule edge7 =null;
+		GraphPointcut graph5 =null;
+		NodePointcut node6 =null;
+		EdgePointcut edge7 =null;
 
 		try {
 			// src/aofDot/AspectParser/AODot.g:81:3: ( ( WS | ( graph ) | ( node ';' ) | ( edge ';' ) )* )
@@ -925,12 +925,12 @@ public class AODotParser extends Parser {
 
 	// $ANTLR start "graph"
 	// src/aofDot/AspectParser/AODot.g:87:1: graph returns [GraphPointcutRule pc] : ( '..graph' | 'graph' | 'digraph' | 'subgraph' ) WS n= ( NAME | '..' ) ( WS )? '{' rules '}' ;
-	public final GraphPointcutRule graph() throws RecognitionException {
-		GraphPointcutRule pc = null;
+	public final GraphPointcut graph() throws RecognitionException {
+		GraphPointcut pc = null;
 
 
 		Token n=null;
-		ArrayList<PointcutRule> rules8 =null;
+		ArrayList<Pointcut> rules8 =null;
 
 		try {
 			// src/aofDot/AspectParser/AODot.g:88:3: ( ( '..graph' | 'graph' | 'digraph' | 'subgraph' ) WS n= ( NAME | '..' ) ( WS )? '{' rules '}' )
@@ -977,7 +977,7 @@ public class AODotParser extends Parser {
 
 			match(input,32,FOLLOW_32_in_graph489); 
 
-			      pc = new GraphPointcutRule(n.getText(), rules8, new ArrayList<Argument>());
+			      pc = new GraphPointcut(n.getText(), rules8, new ArrayList<Argument>());
 			    
 			}
 
@@ -997,13 +997,13 @@ public class AODotParser extends Parser {
 
 	// $ANTLR start "edge"
 	// src/aofDot/AspectParser/AODot.g:94:1: edge returns [EdgePointcutRule pc] : ( NAME ( WS )? '=' ( WS )? )? '(' ( WS )? s= node ( WS )? ')' ( WS )? ( '->' | '--' ) ( WS )? '(' ( WS )? t= node ( WS )? ')' ( ( WS )? '[' attributes ']' )? ;
-	public final EdgePointcutRule edge() throws RecognitionException {
-		EdgePointcutRule pc = null;
+	public final EdgePointcut edge() throws RecognitionException {
+		EdgePointcut pc = null;
 
 
 		Token NAME10=null;
-		NodePointcutRule s =null;
-		NodePointcutRule t =null;
+		NodePointcut s =null;
+		NodePointcut t =null;
 		ArrayList<Argument> attributes9 =null;
 
 		try {
@@ -1250,7 +1250,7 @@ public class AODotParser extends Parser {
 			        args.add(0, new Argument("_this", new Value(NAME10.getText())));
 			      }
 			      
-			      pc = new EdgePointcutRule(s, t, directed, args);
+			      pc = new EdgePointcut(s, t, directed, args);
 			    
 			}
 
@@ -1270,8 +1270,8 @@ public class AODotParser extends Parser {
 
 	// $ANTLR start "node"
 	// src/aofDot/AspectParser/AODot.g:113:1: node returns [NodePointcutRule pc] : n= ( NAME | '..' ) ( ( WS )? '=' ( WS )? m= ( NAME | '..' ) )? ( ( WS )? '[' attributes ']' )? ;
-	public final NodePointcutRule node() throws RecognitionException {
-		NodePointcutRule pc = null;
+	public final NodePointcut node() throws RecognitionException {
+		NodePointcut pc = null;
 
 
 		Token n=null;
@@ -1409,7 +1409,7 @@ public class AODotParser extends Parser {
 			        nodeName = m.getText();
 			      }
 			      
-			      pc = new NodePointcutRule(nodeName, args);
+			      pc = new NodePointcut(nodeName, args);
 			    
 			}
 

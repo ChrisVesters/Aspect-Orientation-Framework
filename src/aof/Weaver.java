@@ -25,7 +25,7 @@ import java.util.TreeMap;
 public abstract class Weaver {
 
 	/** The pointcuts specified in the aspect files. **/
-	protected static HashMap<String, Pointcut> pointcuts = new HashMap<String, Pointcut>();
+	protected static HashMap<String, PointcutSet> pointcuts = new HashMap<String, PointcutSet>();
 	/** The advices specified in the aspect files. **/
 	protected static HashMap<String, Advice> advices = new HashMap<String, Advice>();
 	/** A link between the pointcuts and the advices. **/
@@ -33,14 +33,14 @@ public abstract class Weaver {
 	/** An order between the advices. We map an advice to it's predecessors! **/
 	protected static HashMap<String, ArrayList<String>> order = new HashMap<String, ArrayList<String>>();
 	/** The joinpoints encountered in the source files. **/
-	protected static HashSet<PointcutRule> joinpoints = new HashSet<PointcutRule>();
+	protected static HashSet<Pointcut> joinpoints = new HashSet<Pointcut>();
 
 	/**
 	 * 
 	 * This class will be used to determine the order between advices.
 	 *
 	 **/
-	public class AdviceComparator implements Comparator<Advice> {
+	private static class AdviceComparator implements Comparator<Advice> {
 
 		/**
 		 * 
@@ -111,6 +111,10 @@ public abstract class Weaver {
 			return adv0Name.compareTo(adv1Name);
 		}
 	}
+	
+	public static AdviceComparator getAdviceOrderer() {
+		return new AdviceComparator();
+	}
 
 	/** All aspect files we have to handle. **/
 	protected static ArrayList<String> aspectFiles = new ArrayList<String>();
@@ -127,7 +131,7 @@ public abstract class Weaver {
 	 * @return true if adding the pointcut was successful, false otherwise.
 	 *
 	 **/
-	public static boolean addPointcut(Pointcut pc) {
+	public static boolean addPointcut(PointcutSet pc) {
 		assert (pc != null);
 
 		String name = pc.getName();
@@ -223,7 +227,7 @@ public abstract class Weaver {
 	 * @param jp The joinpoint we want to add.
 	 *
 	 **/
-	public static void addJoinpoint(PointcutRule jp) {
+	public static void addJoinpoint(Pointcut jp) {
 		assert (jp != null);
 		
 		if (!Weaver.joinpoints.contains(jp)) {
@@ -241,11 +245,11 @@ public abstract class Weaver {
 	 **/
 	public static void main(String[] args) throws Exception {
 		// First we need to clear possible remaining information!
-		Weaver.pointcuts = new HashMap<String, Pointcut>();
+		Weaver.pointcuts = new HashMap<String, PointcutSet>();
 		Weaver.advices = new HashMap<String, Advice>();
 		Weaver.link = new HashMap<String, ArrayList<String>>();
 		Weaver.order = new HashMap<String, ArrayList<String>>();
-		Weaver.joinpoints = new HashSet<PointcutRule>();
+		Weaver.joinpoints = new HashSet<Pointcut>();
 		Weaver.aspectFiles = new ArrayList<String>();
 		Weaver.sourceFiles = new ArrayList<String>();
 		Weaver.outputDir = null;
@@ -296,13 +300,13 @@ public abstract class Weaver {
 	}
 
 	
-	protected HashMap<Pointcut, Match> enclosingPointcuts(PointcutRule jp) {
+	protected HashMap<PointcutSet, Match> enclosingPointcuts(Pointcut jp) {
 		assert (jp != null);
 
-		HashMap<Pointcut, Match> pointcuts = new HashMap<Pointcut, Match>();
-		for (Pointcut pointcut: Weaver.pointcuts.values()) {
+		HashMap<PointcutSet, Match> pointcuts = new HashMap<PointcutSet, Match>();
+		for (PointcutSet pointcut: Weaver.pointcuts.values()) {
 			// Get the matching pointcutrule.
-			for (PointcutRule rule : pointcut.getRules()) {
+			for (Pointcut rule : pointcut.getRules()) {
 				Match match = rule.encloses(jp);
 				if (match == null) {
 					continue;
@@ -325,10 +329,11 @@ public abstract class Weaver {
 	 * @param pointcuts
 	 * @return
 	 */
-	protected TreeMap<Advice, Match> executingAdvices(HashMap<Pointcut, Match> pointcuts) {
+	@Deprecated
+	protected TreeMap<Advice, Match> executingAdvices(HashMap<PointcutSet, Match> pointcuts) {
 		TreeMap<Advice, Match> advices = new TreeMap<Advice, Match>(new AdviceComparator());
 		
-		for (Pointcut pointcut: pointcuts.keySet()) {
+		for (PointcutSet pointcut: pointcuts.keySet()) {
 			String name = pointcut.getName();
 			for (String advice: Weaver.link.get(name)) {
 				Advice ad = Weaver.advices.get(advice);
@@ -359,13 +364,13 @@ public abstract class Weaver {
 	 * @param pointcuts
 	 * @return
 	 */
-	protected TreeMap<Advice, Match> executingAdvices(PointcutRule jp) {
+	protected TreeMap<Advice, Match> executingAdvices(Pointcut jp) {
 		assert (jp != null);
 		
-		HashMap<Pointcut, Match> pointcuts = enclosingPointcuts(jp);
+		HashMap<PointcutSet, Match> pointcuts = enclosingPointcuts(jp);
 		TreeMap<Advice, Match> advices = new TreeMap<Advice, Match>(new AdviceComparator());
 		
-		for (Pointcut pointcut: pointcuts.keySet()) {
+		for (PointcutSet pointcut: pointcuts.keySet()) {
 			String name = pointcut.getName();
 
 			if (!Weaver.link.containsKey(name)) {
