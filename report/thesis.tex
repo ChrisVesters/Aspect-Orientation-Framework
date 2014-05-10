@@ -3,6 +3,7 @@
 \usepackage[masterthesis,english]{comp}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{multirow}
 
 \title{A General Aspect Orientation Framework}
 \author{Chris Vesters}
@@ -200,23 +201,75 @@ Now you can create pointcuts and advice you still need to expand the Weaver clas
 I know this sounds vague and very abstract, which is why I refer to chapters (REF) again since they contain worked out examples.
 
 \chapter{Small C}
-\section{Introduction}
-Small C is a minimal subset of the C language. It does not support structs or including other files, though printf and scanf are supported. There are two reasons why this language is chosen, it is a small language that still contains the elements of modern day programming languages and a compiler was available and modifiable.\\
+Small C is a subset of the C language, which makes it an procedural language. Though it does not support structs or including other files, it does give us a good overview of what aspect orientation in a procedural programming language is like. Besides this, the presences of a modifiable compiler made this language an interesting first step to test the framework.\\
+\\
+Despite the resemblance with C, I specify some examples to show the normal structure of a Small C program.\\
 \\
 TODO: EXAMPLE OF SMALL C
 
-\section{Aspect Orientation}
-The join point model consists of calling and executing functions and getting and setting the value of global variables. This means that there are two sub-classes of PointcutRule, being MethodPointcutRule and MemberPointcutRule.\\
-Because there is no context provided the join points for a function call and a function execution will give the same result. The distinction is however made to show it's potential usability.\\
-\\
-There are three advice kinds for executing a function advice: before, around and after. It would be possible to only allow around advices since before and after are special cases. For the variable advice there are only two moments: before and after.\\
-\\
-You can specify an order of executing the advices since conflicts may arise. This order is specified explicitly by saying that one advice is 'bigger' than another. The result of this order is that the biggest advice 'encloses' the smaller one.\\
-TODO: show it with an image.
+\section{Join Point Model}
+Due to the minimalistic character of the language the join point model is limited too. The join points identified can be divided into two groups, each with two types. An overview of the join points is given in table (TODO: REF).
+\begin{table}
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+Join Point & Type & Description\\
+\hline
+\multirow{2}{*}{Function} & Call & The moment a function is called.\\
+& Execution & The moment a function is executed\\
+\hline
+\multirow{2}{*}{Global Variable} & Set & The moment a global variable is set.\\
+& Get & The moment a global variable is accessed.\\
+\hline
+\end{tabular}
+\label{tab:SmallC_JoinPoints}
+\caption{Small C join points.}
+\end{table}
 
-We notice that the order for an after-after conflict is the inverse of that in a before-before conflict. This may seem weird at first, but the reason for this is that we need to be able to resolve around-around conflicts. In this case we want one around advice to enclose the other, this however means that the before part of this enclosing advice comes before the other advice, but the after part comes after it.\\
+\section{Base Language Compiler}
+TODO: explain how the base language compiler was used to get the joinpoint.
+
+\section{Aspect Language}
+Before discussing the parts of the framework it is required to explain some basic elements of the language. Though the language is mostly based on AspectJ, there are some differences mostly caused by the attempt to keep the language as simple as possible.\\
 \\
-TODO: explain how the file changes: wrappers!
+Since we don't want to specify each member or method explicitly, the concept of wildcards is often introduced. This is also the case for this language, the '..' wildcard allows the user to specify a space that can be covered by any 0 or more characters.\\
+\\
+The compiler I used already had an entire type system, which could easily be used for the framework too. (TODO: add diagram) To support wildcards an extra type, the AnyType, was added. This type will allow the user to leave the type unspecified. Note that it is impossible to partly specify a type such as '..int' which could match types such as longint, shortint and int. This is not a problem since the only types allowed in Small C are: 'int', 'float', 'char', 'void' and 'boolean' in combination with the array and pointer additions.\\
+\\
+A complete overview of the language in a visual BNF form can be seen in figure (TODO: Add diagram). Keep in mind that the explanation of most parts is still to come.\\
+
+
+\section{Pointcuts}
+The join points are mapped to pointcuts in a one-on-one manner. For each join point there exists a pointcut, being MethodPointcut and MemberPointcut. The different types are handled by adding a flag to the pointcut to indicate the type. Because identifying a method or a global variable is totally different we need to separate these two. But because a call and an execution both execute on a method we can combine these two together. This also holds for the get and set of a global variable.\\
+\\
+To identify a method join point we need the signature of the method, consisting of the name of the method, the return type and a set of arguments. Note that the arguments are already implemented by the abstract super class, and thus are not part of the MethodPointcut class. (TODO: Add diagram). Note that wildcards can be used in every element of the pointcut: in the name of the method, as a type of an argument, as  return type or as part of the argument list. It is not allowed to use a wildcard in the name of the arguments since these will be passed on to the advice to be used there, doing this wouldn't make any difference because the arguments are only matched on type and not on name. The names however are used to map them onto the arguments specified in the pointcutset. It is therefor also required that a pointcut contains all the arguments the ecnlosing pointcutset does. (TODO: add examples).\\
+\\
+The MemberPointcut is pretty empty, simply because the best way to identify a global variable is to see it as an argument of the pointcut. By doing this the only thing the MemberPointcut class has to add is the flag to identify the different types. (TODO: Add diagram) Just as with the MethodPointcut it possible to use a wildcard as type, but it is also allowed to specify a wildcard as (part of) the name of the member to match multiple global variables. Because a MemberPointcut only contains one argument, being the member, it is always this argument that is mapped to the pointcutset arguments. (TODO: add examples)\\
+\\
+The current implementation does not use the context of the framework, which limits usability. Yet I am convinced that adding a context would not add much functionality since the only context in Small C is the call hierarchy. Note that due to the lack of a context in the pointcuts the method call and execution pointcut will yield the same result, with a context we could for instance get the current method.
+
+\section{Advice}
+The advice of our aspect oriented version of Small C is very basic, it contains a string which represents Small C code. The code is allowed to contain arguments that are defined by the pointcutset it is linked to, but these are not treated specially in the CAdvice class itself (TODO: add UML diagram). Besides the code, the CAdvice class also contains some timing information. This breaks the clear separation between pointcuts and advice and can be considered to be bad programming, yet this way we can create pointcutsets that are more re-usable. The different types, specifying the moment of execution, are before, after and around. These are the same as are present in AspectJ, and are pretty straightforward. Only the around advice may need some more explanation. (TODO: give the explanation) (TODO: explain the different types of advice)\\
+\\
+An advice needs to be linked with a pointcutset, this is done by referring to it's name and specifying the arguments it requires. Note that the arguments need to match on type, but may differ on name, the names used in the advice can be used in the body of the advice.\\
+\\
+The body of the advice is not parsed in any way, at the moment it is created. It is not even parsed anywhere in the entire process until the very end which is simply compiling the weaved code. (TODO: add examples)
+
+\section{Order}
+There are two situations in which multiple advices can be mapped to the same moment in execution. The most obvious situation is when multiple advices are linked to the same pointcut set, but also if we have multiple pointcutsets that happen to match the same join point. In both cases it is possible that advices give rise to conflicts, but only if their types overlap.\\
+\\
+First of all we will discuss the natural order of the advices. If there is no conflict the order is determined by the type of the advice (TODO: add image an overview of the different types of advice and their order), if there is a conflict but no order, it's up to the framework to resolve it.\\
+\\
+To determine the order when conflicts do arise it is possible to specify an order between any two advices, even those that can never cause a conflict which may seem useless. However, it becomes useful in the case where you want more than two advice to be in a specific order and they are of different types. (TODO: add example of before, after and arround with order).
+(TODO: add examples)
+
+\section{Weaver}
+The weaver is the biggest piece of code, after all it is the core part of every aspect oriented language. Once it has all the information it can start putting it together, it does this by writing wrapper methods for the join points, even if there is no advice to be execute for this join point. This last could have been omitted, but for simplicity it is not. Which wrappers are generated depends on the join point, and partly on the advices. For every global variable declared there will be two wrappers, one to handle the access to the variable, and another for the assignment of a new value. (TODO: add example) The same holds for a method but with call and execution instead. (TODO: add example) The original operations will be modified so that they use the wrappers instead. (TODO: add examples)\\
+\\
+Besides these wrappers some other methods are generated as well. One for each advice of the type before or after, and one for each matching join point of an around advice. The reason the around advices needs multiple instances is that it will have to proceed to the original method. While this is not the case for the before and after advice, it is still much easier to put them in a separate method, especially if you consider that such an advice can alter the values of arguments, but that these changes may not be passed on to the actual method, only the around advice may do such things. (TODO: add examples)\\
+\\
+Besides generating wrappers, the weaver is also responsible for delivering the right arguments to the advice, this is another situation that shows the advantages of putting an advice in a separate method. The around advice also contains a proceed() call, the weaver has to replace this with a call to the original method or next around advice. The arguments specified in the proceed must be conserved and passed on. To not complicate the weaver any further it is required that the user manages the declaration of a value to store the return result and explicitly returns this value if a return value is required. The declaration, assigning the return value of the proceed() and return the value all must occur separately. This is because it is possible that the weaver will insert calls to other advices before and after the proceed call. (TODO: add examples).
+
 \section{Examples}
 TODO
 
@@ -230,31 +283,85 @@ It was impossible to change the calls in the first phase due to a simple circula
 Adding the content can not be done before phase 2, simply because the content contains function calls to the actual functions which need to be kept. It is impossible to distinguish a call from within a wrapper from one within a 'normal' function, yet we need to treat them separately. Therefor we need to add the content in a separate phase.
 
 \chapter{Dot}
-\section{Introduction}
-Dot is a language that allows you to easily specifies the structure and appearance of a graph. The features it supports are directed edges, undirected edges, subgraphs, labels for nodes and edges, different shapes, colors and more.\\
+Dot is a language that allows you to easily specifies the structure and appearance of a graph. Some of the features the language supports  are directed edges, undirected edges, subgraphs, labels for nodes and edges, different shapes, colors and more. Despite that it is a pretty simple to use language, and has a very straightforward syntax it tends to be very verbose when trying to create large and complicated graphs.\\
 \\
-Because there is no time aspect related to dot, adding AOP may seem weird since join points are defined as points in the execution of a program. This actually means that the join points simply map to points in the code in a static way. Yet the ideas of AOP can still be applied.\\
+Dot does not have any time related aspect as the result of the 'compiler' is the graph that the user wants. Because of this it adding AOP may seem weird since join points are defined as points in the execution of a program. Since the program does not execute, but is a static graph, all the join points simply map to points in the code in a static way. Yet the ideas of AOP can still be applied.\\
+\\
+Because the syntax of Dot is that self-explaining, showing a few examples is enough to get an understanding of the language.\\
 \\
 TODO: EXAMPLE OF DOT
 
-\section{Aspect Orientation}
-The join point model consists of nodes and edges, for which we can specify required attributes, and graphs, which is used to specify pieces larger than one element. To achieve this there are three subclasses of PointcutRule: NodePointcutRule, EdgePointcutRule and GraphPointcutRule.\\
+\section{Join Point Model}
+The join points identified in Dot are all the elements of the graph, being the graph itself, nodes and edges. This simple join point model is mostly caused by the lack of run-time behavior.
+
+\section{Base Language Compiler}
+TODO: Explain the base language compiler. This was a very simple to modify compiler, that's about all I remember.
+
+\section{Aspect Language}
+The aspect language mostly uses the same syntax as Dot itself to keep the language as simple as possible. There exists a wildcard to create more general rules, being '..'. By using this the programmer specifies that anything can take its place.\\
 \\
-An advice may consist of attributes (for nodes or edges) and/or entire nodes or edges in the case of a graph pointcut. For each advice you need to specify what to do with the elements, you can either add them or delete them. Because there is no notion of time, you don't need to specify when the advice should be executed.\\
+TODO: explain the concept of Attributes: how is this used?
+
+A complete overview of the language in a visual BNF form can be seen in figure (TODO: ADD DIAGRAM).
+
+\section{Pointcuts}
+Every join point is expressed by a pointcut, resulting in three pointcuts being GraphPointcut, NodePointcut and EdgePointcut which represent respectively a graph, node and edge. All of these pointcuts can have Dot attributes, these will be stored as arguments and thus are part of the superclass Pointcut. But because each pointcut also has specific information I will now discuss these three pointcuts into more detail.\\
 \\
-Despite the absence of time, you may still need to specify an order when advices operate on the same elements. In such cases changing the order may lead to different results.
+The GraphPointcut requires all the information of it's nodes and edges. Instead of introducing new types for nodes and edges, it is easier to reuse the pointcuts to represent this. A graph also has a name, though this information is not used in the current version.\\
+Checking whether a graph matches with a GraphPointcut is very simple, we just need to compare the nodes and edges it contains, which is discussed when we introduce these pointcuts and we need to verify that all the attributes are present and have the same value if any specified. A wildcard can be used to indicated that the graph may contain more nodes and edges, or that the attributes is just a subset.\\
+TODO: Example\\
+\\
+A NodePointcut is the easiest as it only has a name and attributes, and since attributes are already handled by the superclass all we need to do is add a name. A node matches a NodePointcut if it has the same name and all the attributes match.\\
+TODO: Example\\
+\\
+An EdgePointcut isn't that much harder, thanks to the compiler every edge contains exactly two nodes: a source and a target. These two nodes are again represented by a NodePointcut, as this was the easiest solution. On top of that we also need to know whether the edge is directed or not, which is a simple boolean. An edge matches a pointcut if they are either both directed and the sources and targets match, if they are both undirected the source and target node may be switched. (TODO: check this: may be an error in the current version!).\\
+TODO: Example\\
+\\
+The current version does not use the context mechanism, but the user can specify that a form of context by wrapping it in a graph. By doing this, we can make a link between different elements in the same graph. I believe that this is also the only possible use for a context in Dot.\\
+\\
+Parameters can be introduced on every level of the pointcut, this means that we can specify a GraphPointcut but introduce a parameter for one of it's NodePointcuts.\\
+TODO: Example
+
+\section{Advice}
+There exists two kinds of advice: insert and delete, which are meant to respectively insert elements or delete them from the pointcut. To provide this functionality the DotAdvice is created, this contains the type of the advice and the body, being the elements that have to be inserted or deleted. These elements are expressed using the Pointcuts, this allows us to quickly re-use all the functionality for the pointcuts, among which the usage of parameters and wildcards.\\
+TODO: Examples
+
+\section{Order}
+Despite the absence of runtime behaviour it is still possible that conflicts arise if two advices modify the same element and the modifications overlap. Just think of an advice that colors a node red, and another that colors it blue. By changing the order of these two advices we either get a red node or a blue one. To specify an order, we simply create a point-comma separated list of the order in which they have to be executed. If there are two advices without an order that do execute at the same time, the order is undetermined.\\
+TODO: Example
+
+\section{Weaver}
+The weaver will first gather all advices and after that it will start executing them. This is important as it means that if one advice modifies an element in such a way that it no longer matches a pointcut any changes caused by advices liked to that pointcut will still be executed.\\
+\\
+No other important notes are to be made. Thanks to the Dot compiler it is easy to get all the graphs, nodes and edges from a file modify them and write the resulting graph back to file.
 
 \section{Examples}
 TODO
 
 \section{Difficulties}
 The biggest problem encountered was how to decide on the syntax of the Aspect Orientation Language. Once this was done adding Aspect Orientation went really fast, also thanks to the compiler which allowed it to easily modify the graph and write it back to file.\\
+\\
+One small problem was that there were two minor bugs in the compiler which needed to be fixed first, but this could be done really fast due to the availability of the source code.
+
+\chapter{AOWP}
+TODO
+
+\chapter{AspectGrid}
+TODO
+
+\chapter{AspectMatlab}
+TODO
+
+\chapter{Conspects}
+TODO
+
+\chapter{DISL}
+TODO
+
+\chapter{KALA}
+TODO
 
 
-\chapter{...}
-- Introduction to base language.\\
-- Pointcuts + Other Aspect Oriented related stuff.\\
-- Difficulties.
 \chapter{Discussion}
 - To what extent are parts being reused? (or not)\\
 - How much coupling is there between the base language and the module?\\
