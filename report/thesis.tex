@@ -240,7 +240,13 @@ Before discussing the parts of the framework it is required to explain some basi
 \\
 Since we don't want to specify each member or method explicitly, the concept of wildcards is often introduced. This is also the case for this language, the '..' wildcard allows the user to specify a space that can be covered by any 0 or more characters.\\
 \\
-The compiler I used already had an entire type system, which could easily be used for the framework too. (TODO: add diagram) To support wildcards an extra type, the AnyType, was added. This type will allow the user to leave the type unspecified. Note that it is impossible to partly specify a type such as '..int' which could match types such as longint, shortint and int. This is not a problem since the only types allowed in Small C are: 'int', 'float', 'char', 'void' and 'boolean' in combination with the array and pointer additions.\\
+The compiler I used already had an entire type system, which could easily be used for the framework too. (TODO: REFF) To support wildcards an extra type, the AnyType, was added. This type will allow the user to leave the type unspecified. Note that it is impossible to partly specify a type such as '..int' which could match types such as longint, shortint and int. This is not a problem since the only types allowed in Small C are: 'int', 'float', 'char', 'void' and 'boolean' in combination with the array and pointer additions.\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.7]{images/AOFC/CType.jpg}
+\caption{UML diagram of the CType class and its subclesses.}
+\label{fig:CType}
+\end{figure}
 \\
 A complete overview of the language in a visual BNF form can be seen in figure (TODO: Add diagram). Keep in mind that the explanation of most parts is still to come.\\
 
@@ -248,14 +254,32 @@ A complete overview of the language in a visual BNF form can be seen in figure (
 \section{Pointcuts}
 The join points are mapped to pointcuts in a one-on-one manner. For each join point there exists a pointcut, being MethodPointcut and MemberPointcut. The different types are handled by adding a flag to the pointcut to indicate the type. Because identifying a method or a global variable is totally different we need to separate these two. But because a call and an execution both execute on a method we can combine these two together. This also holds for the get and set of a global variable.\\
 \\
-To identify a method join point we need the signature of the method, consisting of the name of the method, the return type and a set of arguments. Note that the arguments are already implemented by the abstract super class, and thus are not part of the MethodPointcut class. (TODO: Add diagram). Note that wildcards can be used in every element of the pointcut: in the name of the method, as a type of an argument, as  return type or as part of the argument list. It is not allowed to use a wildcard in the name of the arguments since these will be passed on to the advice to be used there, doing this wouldn't make any difference because the arguments are only matched on type and not on name. The names however are used to map them onto the arguments specified in the pointcutset. It is therefor also required that a pointcut contains all the arguments the ecnlosing pointcutset does. (TODO: add examples).\\
+To identify a method join point we need the signature of the method, consisting of the name of the method, the return type and a set of arguments. Note that the arguments are already implemented by the abstract super class, and thus are not part of the MethodPointcut class. (TODO: REFF). Note that wildcards can be used in every element of the pointcut: in the name of the method, as a type of an argument, as  return type or as part of the argument list. It is not allowed to use a wildcard in the name of the arguments since these will be passed on to the advice to be used there, doing this wouldn't make any difference because the arguments are only matched on type and not on name. The names however are used to map them onto the arguments specified in the pointcutset. It is therefor also required that a pointcut contains all the arguments the ecnlosing pointcutset does. (TODO: add examples).\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.7]{images/AOFC/MethodPointcut.jpg}
+\caption{UML diagram of the MethodPointcut class.}
+\label{fig:MethodPointcut}
+\end{figure}
 \\
-The MemberPointcut is pretty empty, simply because the best way to identify a global variable is to see it as an argument of the pointcut. By doing this the only thing the MemberPointcut class has to add is the flag to identify the different types. (TODO: Add diagram) Just as with the MethodPointcut it possible to use a wildcard as type, but it is also allowed to specify a wildcard as (part of) the name of the member to match multiple global variables. Because a MemberPointcut only contains one argument, being the member, it is always this argument that is mapped to the pointcutset arguments. (TODO: add examples)\\
+The MemberPointcut is pretty empty, simply because the best way to identify a global variable is to see it as an argument of the pointcut. By doing this the only thing the MemberPointcut class has to add is the flag to identify the different types. (TODO: REFF) Just as with the MethodPointcut it possible to use a wildcard as type, but it is also allowed to specify a wildcard as (part of) the name of the member to match multiple global variables. Because a MemberPointcut only contains one argument, being the member, it is always this argument that is mapped to the pointcutset arguments. (TODO: add examples)\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.7]{images/AOFC/MemberPointcut.jpg}
+\caption{UML diagram of the MemberPointcut class.}
+\label{fig:MemberPointcut}
+\end{figure}
 \\
 The current implementation does not use the context of the framework, which limits usability. Yet I am convinced that adding a context would not add much functionality since the only context in Small C is the call hierarchy. Note that due to the lack of a context in the pointcuts the method call and execution pointcut will yield the same result, with a context we could for instance get the current method.
 
 \section{Advice}
-The advice of our aspect oriented version of Small C is very basic, it contains a string which represents Small C code. The code is allowed to contain arguments that are defined by the pointcutset it is linked to, but these are not treated specially in the CAdvice class itself (TODO: add UML diagram). Besides the code, the CAdvice class also contains some timing information. This breaks the clear separation between pointcuts and advice and can be considered to be bad programming, yet this way we can create pointcutsets that are more re-usable. The different types, specifying the moment of execution, are before, after and around. These are the same as are present in AspectJ, and are pretty straightforward. Only the around advice may need some more explanation. (TODO: give the explanation) (TODO: explain the different types of advice)\\
+The advice of our aspect oriented version of Small C is very basic, it contains a string which represents Small C code. The code is allowed to contain arguments that are defined by the pointcutset it is linked to, but these are not treated specially in the CAdvice class itself (TODO: REFF). Besides the code, the CAdvice class also contains some timing information. This breaks the clear separation between pointcuts and advice and can be considered to be bad programming, yet this way we can create pointcutsets that are more re-usable. The different types, specifying the moment of execution, are before, after and around. These are the same as are present in AspectJ, and are pretty straightforward. Only the around advice may need some more explanation. (TODO: give the explanation) (TODO: explain the different types of advice)\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.7]{images/AOFC/CAdvice.jpg}
+\caption{UML diagram of the CAdvice class.}
+\label{fig:CAdvice}
+\end{figure}
 \\
 An advice needs to be linked with a pointcutset, this is done by referring to it's name and specifying the arguments it requires. Note that the arguments need to match on type, but may differ on name, the names used in the advice can be used in the body of the advice.\\
 \\
@@ -274,7 +298,21 @@ The weaver is the biggest piece of code, after all it is the core part of every 
 \\
 Besides these wrappers some other methods are generated as well. One for each advice of the type before or after, and one for each matching join point of an around advice. The reason the around advices needs multiple instances is that it will have to proceed to the original method. While this is not the case for the before and after advice, it is still much easier to put them in a separate method, especially if you consider that such an advice can alter the values of arguments, but that these changes may not be passed on to the actual method, only the around advice may do such things. (TODO: add examples)\\
 \\
-Besides generating wrappers, the weaver is also responsible for delivering the right arguments to the advice, this is another situation that shows the advantages of putting an advice in a separate method. The around advice also contains a proceed() call, the weaver has to replace this with a call to the original method or next around advice. The arguments specified in the proceed must be conserved and passed on. To not complicate the weaver any further it is required that the user manages the declaration of a value to store the return result and explicitly returns this value if a return value is required. The declaration, assigning the return value of the proceed() and return the value all must occur separately. This is because it is possible that the weaver will insert calls to other advices before and after the proceed call. (TODO: add examples).
+Besides generating wrappers, the weaver is also responsible for delivering the right arguments to the advice, this is another situation that shows the advantages of putting an advice in a separate method. The around advice also contains a proceed() call, the weaver has to replace this with a call to the original method or next around advice. The arguments specified in the proceed must be conserved and passed on. To not complicate the weaver any further it is required that the user manages the declaration of a value to store the return result and explicitly returns this value if a return value is required. The declaration, assigning the return value of the proceed() and return the value all must occur separately. This is because it is possible that the weaver will insert calls to other advices before and after the proceed call. (TODO: add examples).\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.7]{images/AOFC/CWeaver.jpg}
+\caption{UML diagram of the CWeaver class.}
+\label{fig:CWeaver}
+\end{figure}
+\\
+Now that all the components have been introduced, I give a final overview of the entire structure to make it extra clear how all the components are connected.\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.55]{images/AOFC/CFull.jpg}
+\caption{A full overview of the use of the framework for Small C.}
+\label{fig:CFull}
+\end{figure}
 
 \section{Examples}
 TODO
