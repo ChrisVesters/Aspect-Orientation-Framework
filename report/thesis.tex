@@ -345,6 +345,13 @@ TODO: Explain the base language compiler. This was a very simple to modify compi
 The aspect language mostly uses the same syntax as Dot itself to keep the language as simple as possible. There exists a wildcard to create more general rules, being '..'. By using this the programmer specifies that anything can take its place.\\
 \\
 TODO: explain the concept of Attributes: how is this used?
+TODO: explain the type system.\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.7]{images/AOFDot/DotType.jpg}
+\caption{UML diagram of the type system for aspect orientation in Dot.}
+\label{fig:DotType}
+\end{figure}
 
 A complete overview of the language in a visual BNF form can be seen in figure (TODO: ADD DIAGRAM).
 
@@ -360,6 +367,12 @@ TODO: Example\\
 \\
 An EdgePointcut isn't that much harder, thanks to the compiler every edge contains exactly two nodes: a source and a target. These two nodes are again represented by a NodePointcut, as this was the easiest solution. On top of that we also need to know whether the edge is directed or not, which is a simple boolean. An edge matches a pointcut if they are either both directed and the sources and targets match, if they are both undirected the source and target node may be switched. (TODO: check this: may be an error in the current version!).\\
 TODO: Example\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.3]{images/AOFDot/DotPointcuts.jpg}
+\caption{UML diagram of the three pointcut classes.}
+\label{fig:DotPointcuts}
+\end{figure}
 \\
 The current version does not use the context mechanism, but the user can specify that a form of context by wrapping it in a graph. By doing this, we can make a link between different elements in the same graph. I believe that this is also the only possible use for a context in Dot.\\
 \\
@@ -368,6 +381,13 @@ TODO: Example
 
 \section{Advice}
 There exists two kinds of advice: insert and delete, which are meant to respectively insert elements or delete them from the pointcut. To provide this functionality the DotAdvice is created, this contains the type of the advice and the body, being the elements that have to be inserted or deleted. These elements are expressed using the Pointcuts, this allows us to quickly re-use all the functionality for the pointcuts, among which the usage of parameters and wildcards.\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.6]{images/AOFDot/DotAdvice.jpg}
+\caption{UML diagram of the DotAdvice class.}
+\label{fig:DotAdvice}
+\end{figure}
+\\
 TODO: Examples
 
 \section{Order}
@@ -377,7 +397,13 @@ TODO: Example
 \section{Weaver}
 The weaver will first gather all advices and after that it will start executing them. This is important as it means that if one advice modifies an element in such a way that it no longer matches a pointcut any changes caused by advices liked to that pointcut will still be executed.\\
 \\
-No other important notes are to be made. Thanks to the Dot compiler it is easy to get all the graphs, nodes and edges from a file modify them and write the resulting graph back to file.
+No other important notes are to be made. Thanks to the Dot compiler it is easy to get all the graphs, nodes and edges from a file modify them and write the resulting graph back to file.\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.7]{images/AOFDot/DotWeaver.jpg}
+\caption{UML diagram of the DotWeaver class.}
+\label{fig:DotWeaver}
+\end{figure}
 
 \section{Examples}
 TODO
