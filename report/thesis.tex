@@ -104,7 +104,7 @@ The first component of the aspect language that we identified were the pointcuts
 Something we notice, which is also the case for AspectJ, is that it is not possible to identify completely different join points with one pointcut. This complicates writing advice that has to be executed on these two different sets of join points. To simplify this we allow grouping pointcuts into sets, this is implemented as a PointcutSet, which has a set of pointcuts, arguments that are available for the advice, and should be present in all the poincuts of the set, and a name so we can link the advice to this pointcut. (TODO:REF)
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=0.55]{images/PointcutSet.png}
+\includegraphics[scale=0.7]{images/AOF/PointcutSet.jpg}
 \label{fig:PointcutSet}
 \caption{UML diagram of the PointcutSet and Pointcut.}
 \end{figure}\\
@@ -112,15 +112,21 @@ Something we notice, which is also the case for AspectJ, is that it is not possi
 The advices are implemented by the abstract Advice class. This class has a name, which will make ordering them a lot easier, and a set of arguments, these arguments are the ones that can be used inside the advice body. Note that the arguments of the pointcut to which this advice is linked must be assignable to these arguments. The body or actual code of the advice is not provided by this class, simply because it depends on the base language as we want this to be in the same formalism. (TODO: ADD REFF)
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=0.55]{images/Advice.png}
+\includegraphics[scale=0.7]{images/AOF/Advice.jpg}
 \label{fig:Advice}
 \caption{UML diagram of the Advice.}
 \end{figure}\\
 \\
-Before going any further some more explanation about some already mentioned concepts is required. I have talked about arguments and a context, but didn't mention what these are. A context is the easiest, since  the context can be anything and highly depends on the base language the only thing the framework provides is an interface Context. An argument is a bit harder, every base language has its own vision of what an argument is, though two concepts are very common, being a name and a type. For this reason the Argument class has a name, which is also required for access to the argument and a type. The type however can not be a base language type, but should be more general. For this reason an interface called Type was created. (TODO: ADD REFF)
+Before going any further some more explanation about some already mentioned concepts is required. I have talked about arguments and a context, but didn't mention what these are. An argument is a hard to abstract as every base language has its own vision of what an argument is, though two concepts are very common, being a name and a type. For this reason the Argument class has a name, which is also required for access to the argument and a type. The type however can not be a base language type, but should be more general. For this reason an interface called Type was created. A context is easier, since  the context can be anything and highly depends on the base language the only thing the framework provides is an interface Context. Note that the Context and Type interface are exactly the same, I will discuss this into more detail in chapter (TODO: REF DISCUSSIONS). (TODO: ADD REFF)
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=0.55]{images/Type-Context.png}
+\includegraphics[scale=0.7]{images/AOF/Argument.jpg}
+\label{fig:Argument}
+\caption{UML diagram of the Argument class.}
+\end{figure}\\
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.7]{images/AOF/Type-Context.jpg}
 \label{fig:Type-Context}
 \caption{UML diagram of the Type and Context interface.}
 \end{figure}\\
@@ -140,7 +146,7 @@ The ordering mechanism requires some extra information as well, I mentioned earl
 A final remark that has to be made is how the framework handles the argument mapping from adivce to pointcut and join point. For this the framework provides a Match class that contains a dynamic value for each argument. (TODO: add REFF) We can use this match to get the join point specific value for an argument of the advice.
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=0.55]{images/Match.png}
+\includegraphics[scale=0.7]{images/AOF/Match.jpg}
 \label{fig:Match}
 \caption{UML diagram of the Match class.}
 \end{figure}\\
@@ -159,7 +165,7 @@ This brings us to the last component, the weaver. Just like most elements in the
 Besides that it also provides some methods that simplify processing the information. The most important one is 'executingAdvices', given a certain joinpoint this method will return all the advices that have to be executed in the order they are returned. In case the user needs to know the pointcuts that match a certain joinpoint a method 'enclosingPointcuts' is provided. The framework also implements a way to compare advices based on the partial ordering, this is done by the AdviceComparator which is an extension of the Comparator. This is meant for internal usage and the user should not need to use this since the return value of the 'executingAdvices' method is already ordered. (TODO: add REF)
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=0.55]{images/Weaver.png}
+\includegraphics[scale=0.7]{images/AOF/Weaver.jpg}
 \caption{UML diagram of the Weaver class.}
 \label{fig:Weaver}
 \end{figure}\\
@@ -167,7 +173,7 @@ Besides that it also provides some methods that simplify processing the informat
 A complete overview of the framework and how everything is connected can be seen in figure (TODO: REF).
 \begin{figure}
 \centering
-\includegraphics[scale=0.45]{images/FullView.png}
+\includegraphics[scale=0.65]{images/AOF/Full.jpg}
 \caption{UML diagram of the entire framework.}
 \label{fig:FullView}
 \end{figure}
