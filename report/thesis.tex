@@ -4,6 +4,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{multirow}
+\usepackage{mathtools}
 
 \title{A General Aspect Orientation Framework}
 \author{Chris Vesters}
@@ -414,9 +415,144 @@ The biggest problem encountered was how to decide on the syntax of the Aspect Or
 One small problem was that there were two minor bugs in the compiler which needed to be fixed first, but this could be done really fast due to the availability of the source code.
 
 \chapter{AOWP}
-TODO
+AOWP (TODO: REF) is a domain specific language for web applications. Most web applications are developed with the Model-View-Controller framework which clearly separates the application into business logic (model layer) and the visual component (view layer), which communicate through the controller. It is however this framework that makes general AOP languages unfeasible as they break this clear separation.\\
+\\
+Though there exists an AOP language for PHP called AOPHP, this language has some flaws. First of all there is a lack of pointcuts to really cover all join points of web applications. Secondly there is no way to handle a history of page visits without modifying the web pages. Finally we note that the aspects can not be sufficiently separated from the crosscutting concerns.
 
-\chapter{AspectGrid}
+\section{Join Point Model}
+The join points that can occur in a web application consists of events based on HTTP and language specifications of well-known Web programming languages such as PHP and Java/Servlet. Where the first consists of receiving HTTP requests, reading form data and reading or writing cookie data, the latter consists of reading the session data. An overview of all the events is shown in table (TODO: REF).
+\begin{table}
+\centering
+\begin{tabular}{l|l}
+\hline
+Abbreviation & Event\\
+\hline
+\hline
+REQ & Receive an HTTP Request\\
+\hline
+F/R & Read the form data\\
+\hline
+C/R & Read the cookie data\\
+\hline
+C/W & Write the cookie data\\
+\hline
+S/R & Read the session data\\
+\hline
+S/W & Write the session data\\
+\hline
+\end{tabular}
+\caption{AOWP events}
+\label{tab:AOWP_Events}
+\end{table}
+
+
+\section{Aspect Language}
+AOWP re-uses the syntax of web programming languages such as PHP and Java/Servlet. It does this by mapping the aspect constructs on to object oriented structures. By doing this the effort required by the user is minimizes as he doesn't need to learn a new language.\\
+\\
+Creating an aspect can be done by creating a class that extends the Aspect class, adding a pointcut and an advice is done by declaring functions with the name of respectively 'pointcut' and the name of the type of advice ('before', 'after', 'around'). (TODO: example)\\
+\\
+This could also be accomplished if we were to use the framework, since it is required to create an aspect language of our own. This means that the same syntax could be chosen, though it has to be said that the framework has no notion of aspects, but this is not a problem as it is the responsibility of the compiler to extract the required information and provide it to the weaver in a format it understands.
+
+\section{Pointcuts}
+There are three categories of pointcuts, a first one selects events, a second selects event flows and a third selects based on usage contexts. Each of these categories has a set of sub-types, or so called designators. An overview of all the designators are given in tables (TODO: REF).
+\begin{table}
+\centering
+\begin{tabular}{l|p{7cm}}
+\hline
+Designator & Description\\
+\hline
+\hline
+request & Select REQ with the specified URL\\
+\hline
+getget & Select specified F/R in a GET request\\
+\hline
+postget & Select specified F/R in a POST request\\
+\hline
+cookieget & Select specified C/R\\
+\hline
+cookieset & Select specified C/W\\
+\hline
+sessionget & Select specified S/R\\
+\hline
+sessionset & Select specified S/W\\
+\hline
+\end{tabular}
+\caption{Designators for selecting AOWP events}
+\label{tab:Designators_AOWP_Events}
+\end{table}
+\begin{table}
+\centering
+\begin{tabular}{l|p{7cm}}
+\hline
+Designator & Description\\
+\hline
+\hline
+withinrequest & Select all AOWP events in a REQ\\
+\hline
+pflow & Select all AOWP events in specified page transitions\\
+\hline
+\end{tabular}
+\caption{Designators for selecting AOWP event flows}
+\label{tab:Designators_AOWP_Flows}
+\end{table}
+\begin{table}
+\centering
+\begin{tabular}{l|p{7cm}}
+\hline
+Designator & Description\\
+\hline
+\hline
+accessnum & Select all AOWP events when the number of access users is the specified number or greater.\\
+\hline
+\end{tabular}
+\caption{Designators based on usage contexts}
+\label{tab:Designators_AOWP_Contexts}
+\end{table}
+How these designators are used can be seen in table (TODO:REF).
+\begin{table}
+\centering
+\begin{tabular}{l|p{7cm}}
+\hline
+Example & Description\\
+\hline
+\hline
+request(/news.php) & Selects all events of receiving HTTP requests on news.php.\\
+\hline
+withinrequest(/login.php) & Selects all events generedted during the execution of HTTP requests for login.php\\
+\hline
+pflow(/news.php) & Selects all the events involved in handling HTTP requests when the user has seen news.php\\
+\hline
+accessnum(5) & Selects all events involved in handling HTTP Requests when the number of users if 5 or more.\\
+\hline
+request(/*Action.php) & Selects the REQ whose name starts with '/' and ends with 'Action.php'.\\
+\hline
+!pflow(/news.php) & Selects a negative set of events selected by pflow(/news.php)\\
+\hline
+\end{tabular}
+\caption{Designators based on usage contexts}
+\label{tab:Designators_AOWP_Contexts}
+\end{table}
+From this table we also see that it is possible to use regular expressions as an argument of a designator.\\
+\\
+I will now discuss how these pointcuts could be implemented with the earlier presented framework. Instead of creating a pointcut subclass for each category it is more interesting to only create one subclasses being AOWPPointcut. I choose to take all the pointcuts together as their is no distinction in how these are represented. The class will rely on the arguments of the Pointcut superclass to implement the argument. The specific designator this instance represents has to be indicated by a special value, either an enum or an integer.\\
+\\
+By doing this we can easily specify pointcuts, creating join points is however a bit more tricky due to capturing the flow. We could do this naivly and create a pointcut for each element along the flow, but that would cause a long delay. It is much better to capture the entire flow as a context and provide that along with the join point. This means that checking whether a pointcut matches a join point is a bit more work, but it allows us to generate only one instance for the entire join point. (TODO: Example)\\
+\\
+AOWP allows combining multiple designators by using the negation (!), intersection (\&) and union ($|$) operator. This is not possible with the framework, since this only supports union. It is however not a big problems as we can create a new type of pointcut, the OperatorPointcut. This pointcut will simply execute a certain operator (!, \& or $|$) on its members, which are again pointcuts. Another approach could have been to use the union of the framework and using the OperatorPointcut only for the negation and intersection, but this would lead to some extra work to be done. We would have to rework some expressions to make the unions the top-level operator or remote them completely. This can be seen in the following examples. In these examples I use simple letters to represent pointcuts.\\
+\begin{align*}
+!\left(a | b\right) \& c & \Rightarrow \left(!a \& !b\right) \& c\\
+\left(a | b \right) \& !c & \Rightarrow \left(a \& !c\right) | \left(b \& !c \right)
+\end{align*}
+To avoid this extra work it makes more sense to treat the union the same way as the negation and the intersection.
+
+\section{Advice}
+The types of advice AOWP supports is the same as AspectJ, being 'before', 'after' and 'around'. The body of an advice is normal code. Because this is the same as Small C, which is explained earlier, I will not discuss this here again.
+
+\section{Weaver}
+Due to the dynamic behaviour of web applications it is impossible to rely on compile time weaving, and thus run-time weaving is required. The weaver itself works pretty straightforward by extracting join point shadows and injects code to call the weaver.\\
+\\
+This would cause some problems when using the framework, as the current version does not support run-time weaving. A work-around is to set up the weaver each time it is required, but this introduces a large overhead for creating and loading the pointcuts each time.
+\section{Examples}
 TODO
 
 \chapter{AspectMatlab}
@@ -459,12 +595,7 @@ The framework does not provide the '\&' or '!' operator, only the '|' is availab
 In it's current form the framework does not provide run-time weaving. It is however to solve this problem in two different ways. The first is by adding extra code that checks the run-time information and makes a decision based on that. The second is by calling the weaver at run time.  By doing this the run-time information is available at the moment of weaving and can be used to specify pointcuts.\\
 \\
 Since the framework lets the user specify a languages as he likes, the same language can be used as in the paper as long as there is a compiler for it.
-\section{AspectGrid}
-TODO: REFERENCE!\\
-Since it is required to design your own aspect langauge, we can design it that way that the details are hidden as is mentioned in the paper.\\
-AspectGrid itself is based on AspectJ, which makes creating it pretty fast and easy. The framework presented here in this thesis is more general and does not provide existing pointcuts. This means that using this framework instead of extending AspectJ takes a bit more effort.\\
-\\
-It is however perfectly possible and it will share many resemblances with the Aspect Oriented version of Small C that was earlier presented in this thesis. The reason for this is that AspectGrid focuses on spreading computational load, and will therefor focus on the function calls, other pointcuts such as getting and setting a member aren't relevant.
+
 \section{AspectMatlab}
 TODO: REFERENCE!\\
 To add extra information to the pointcuts as is done in the paper, we have to add members to the specific subclasses of the PointcutRule.\\
