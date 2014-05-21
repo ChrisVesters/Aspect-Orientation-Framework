@@ -556,7 +556,98 @@ This would cause some problems when using the framework, as the current version 
 TODO
 
 \chapter{AspectMatlab}
+AspectMatlab (TODO:REF) is as the name suggests an AOP extension to Matlab. Like other extensions it adds pointcuts and advice for method calls or execution and get or setting of variables. It does however more than just this, because Matlab has a strong focus on loops, it also adds pointcuts for loops.\\
+\\
+As presented in the paper it performs source to source compilation taking AspectMatlab source files as input and generating Matlab source files as output. The compiler was build using a couple of toolkits such as Natlab and MetaLexer to get a modular and extensible compiler. (TODO: EXAMPLE)
+
+\section{Join Point Model}
+Besides the method calls and execution that are present in most languages, the call and execution can also be applied for scripts which are commonly used in Matlab. Other commonly found join point such as get and set for arguments are also present. Besides these AspectMatlab also identifies three join point concerning loops, being the execution of the entire loop, the execution of the loop head and the execution of the loop body. (TODO: EXAMPLE)
+
+\section{Base Language Compiler}
+The base language compiler used in the paper is McLab, which is an extensible Matlab compiler. This comes in handy as we will want to modify it to report information and joinpoints to the weaver.\\
+\\
+The compiler will generate an AST containing AspectMatlab and normal Matlab nodes, we will convert this into a complete Matlab AST. (TODO: add image)
+
+\section{Aspect Language}
+The main element of the language is an aspect, such an aspect can contain properties and methods like a class can, but more important it has patters (pointcuts) and actions (advice).\\
+\\
+each of these elements has a syntax similar to normal Matlab syntax as can be seen in figure (TODO: ADD figure). This example will count all the calls that are made with at least 2 arguments.\\
+\\
+The main problem that arises if we want to implement this with the framework, is that there is no notion of 'aspect', which makes it impossible to have properties or methods related to it.\\
+\\
+If we would want to implement something similar as in the example given above, we would have to implement a class or script containing the methods and attributes to which we could write the code for the actions during weaving. This is however not very clean code, and we are undermining the main goal of AOP, which is to clearly concentrate the concerns.\\
+\\
+Other cases however where we do not rely on attributes can be done without a problem. Having methods is not a problem since we can copy them into the advice.\\
+\\
+TODO: Explain arguments, which are pretty strange as this is a bound set!
+
+\section{Pointcuts}
+The pointcuts implemented by AspectMatlab are mentioned earlier when discussing the join point model, therefore I will not discuss them any further but just show an overview in table (TODO: REF).\\
+\begin{table}
+\centering
+\begin{tabular}{l|l}
+\hline
+Pointcut & Description\\
+\hline
+\hline
+call & Captures all calls to functions/scripts.\\
+execution & Captures the execution of function bodies.\\
+get & Captures array accesses.\\
+set & Captures array sets.\\
+loop & Captures execution of all loops.\\
+loophead & Captures the header of the loop.\\
+loopbody & Captures the body of the loop.\\
+\hline
+\end{tabular}
+\end{table}\\
+You can further restrict the scope of matching by using the withing pattern. On the other hand it is also possible to generalize pointcuts by using the wildcards '*' or '..', which can be used to match any function/variable or exactly one argument and one or more variables respectively.\\
+\\
+Because of the Matlab syntax, where 'foo(1,2)' could either be a call to a function with arguments '1' and '2' or an array indexation, it is possible to create a general notation for calling a function or script and getting or setting a variable. A list of possible matching are given in table (TODO: REF).\\
+\begin{table}
+\centering
+\begin{tabular}{l|l}
+\hline
+Pointcut & Description\\
+\hline
+\hline
+call(foo) & Matches all calls to foo.\\
+call(foo()) & Matches calls to foo with no arguments.\\
+call(foo(*)) & Matches calls to foo with exactly one argument.\\
+call(foo(..)) & Matches calls to foo with 1 or more arguments.\\
+call(foo(*,..)) & Matches calls to foo with 2 or more arguments.\\
+call(*(*,..)) & Matches any call with two ore more arguments.\\
+\hline
+\end{tabular}
+\end{table}\\
+You could think that if we were to implement these pointcuts with the new framework we would end up with three subclasses for Pointcut. It is however possible to group them all together into one since there is no clear distinction between a function call and getting a variable. The within would become part of the context provided to the pointcut.
+
+\section{Advice}
+AspectMatlab identifies three types of advice being before, around and after. The body of an advice is normal AspectMatlab code as can be seen in figure (TODO: ADD).\\
+\\
+Since this is the same as done earlier I will not discuss this any further.\\
+\\
+It is possible to specify arguments along the advice. Depending on the type of pointcut different arguments can be used. An overview of the argument-pointcut combinations are shown in figure (TODO: Add figure).\\
+\\
+If we want to implement arguments with the framework we would simply add them to the arguments already implemented by the Pointcut class.
+
+\section{Order}
+AspectMatlab introduces a default ordering where the last encountered around advice becomes the outer most one, followed by the rest of the around advices. After the around advices all the before advices are place in order or occurrence before the actual join point. The some holds for the after advices that are placed right after the join point in the order encountered before the around advices. (TODO: IMAGE)
+
+\section{Weaver}
+The AspectMatlab compiler (weaver) has been build using extensible toolkits, and aimed for a very clean and modular implementation. It takes a collection of Matlab and AspectMatlab source files as its input and produces a collection of woven Matlab source files. I will not discuss the entire process of how this is done, but a simple overview can be seen in figure (TODO: Add image).\\
+\\
+To be able to call all the advice at the right point, some transformations are required. All expression are disassembled into simple expressions as can be seen in the following example:\\
+(TODO: Add example).\\
+\\
+It is also important to note that due to Matlab's semantics it is hard to determine at compile time the semantics of a expression. Because they wanted to minimize the amount of run-time checks, they introduced a name resolution analysis which adds extra information to the AST so they can determine the type.\\
+\\
+Because the current weaver produces a source to source transformation of files, we could implement this the same way using the framework, without requiring any changes to the process.
+
+\section{Examples}
 TODO
+
+\section{Difficulties}
+
 
 \chapter{Conspects}
 TODO
