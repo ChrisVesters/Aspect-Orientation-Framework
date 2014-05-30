@@ -631,8 +631,22 @@ It is possible to specify arguments along the advice. Depending on the type of p
 If we want to implement arguments with the framework we would simply add them to the arguments already implemented by the Pointcut class.
 
 \section{Order}
-AspectMatlab introduces a default ordering where the last encountered around advice becomes the outer most one, followed by the rest of the around advices. After the around advices all the before advices are place in order or occurrence before the actual join point. The some holds for the after advices that are placed right after the join point in the order encountered before the around advices. (TODO: IMAGE)
-
+AspectMatlab introduces a default ordering where the first encountered around advice becomes the outer most one, followed by the rest of the around advices in the order of appearance. After the around advices all the before advices are place in order of occurrence before the actual join point. The some holds for the after advices that are placed right after the join point in the order encountered before the around advices. (TODO: IMAGE)\\
+\\
+Since the framework does not provide such a default order, it is required for the AspectMatlab compiler to explicity add such an order to the weaver. This isn't very complicated though, it suffices to remember the last encountered advice of each type (before, around and after) so that when we read a new one we can add create a link between these two advices and mark the stored one as a predecessor of the new one.\\
+\\
+This solves the order between advices of the same type, what still remains is the order between the different types. There are two different approaches to solve this:
+\begin{enumerate}
+\item Create a link between the types.
+\item Handle the different types one by one in the weaver.
+\end{enumerate}
+The first approach may sound the best one, but at the same time it does some obsolete work, simply because when weaving we will have to treat every type of advice differently. Which means we could organize them during weaving according to their type.\\
+\\
+If however it is still preferred to have an order between the different types, which is possible as it might be helpful with certain implementations, this isn't much work to be done.\\
+\\
+To make all the before advices happen after the last around, we need to store the first encountered before, since we need it at the end to define the last around advice as a predecessor of this first before advice. To make the last after advice happen before the last around advice, since this will be the deepest one and thus the first to be executed after the after, we need to define the last after advice as a predecessor of the last around advice. \\
+\\
+As can be seen in figure (TODO: Image), this leads to some confusing ordering involving around and after, which can still not be used that straightforward.
 \section{Weaver}
 The AspectMatlab compiler (weaver) has been build using extensible toolkits, and aimed for a very clean and modular implementation. It takes a collection of Matlab and AspectMatlab source files as its input and produces a collection of woven Matlab source files. I will not discuss the entire process of how this is done, but a simple overview can be seen in figure (TODO: Add image).\\
 \\
@@ -649,20 +663,108 @@ TODO
 \section{Difficulties}
 
 
-\chapter{Conspects}
-TODO
+\chapter{DiSL}
+DiSL (TODO: REFF) is a domain specific language for bytecode instrumentation. Designing such a language is a complex task as it needs to achieve three conflicting design goals:
+\begin{enumerate}
+\item high expressiveness
+\item high-level programming model
+\item high efficiency
+\end{enumerate}
+Currently there exists low-level languages that meet the first and third goal, but these are based on byte code instrumentation, which makes it hard to develop, maintain and customize tools. Other AOP languages achieve the second goal but do not succeed in exposing important join points, easily provide access to information and mixing bytecode with aspect oriented code.
 
-\chapter{DISL}
-TODO
+\section{Join Point Model}
+To achieve a high level of expressiveness DiSL has an open join point model, which means that any region of byte code can be a join point.
 
-\chapter{KALA}
-TODO
+\section{Base Language Compiler}
+DiSL uses Java as its host language and uses annotations to express the functionality required. To parse the base language source code DiSL relies on jBORAT, a lightweight toolkit providing support for instrumentation with complete bytecode coverage.
+
+\section{Aspect Language}
+First of all it has to be noted that terminology differs from what is generally used in that way that they use \textit{instrumentation}, \textit{marker} and \textit{snippet} instead of aspect, pointcut and advice.\\
+\\
+I've already mentioned some remarks about the aspect language, such as that the code is written as plain Java classes with annotated methods and fields and the open join point Model. Besides having an open join point model, DiSL also allows the user to define his own static and dynamic information which can be used in the snippets. It is also possible to add argument processors which will be used to process arguments.\\
+\\
+Guards and scopes can be used to restrict the matching of snippets. The difference is that guards are implemented as a class with methods that will be evaluated and should return a boolean value, while scopes limit the execution based on the method signature of the join point.
+
+\section{Pointcuts}
+To be able to handle the open join point model, DiSL provides an extensible library of markers. These markers are standard Java classes implementing a special interface for join point selection. It has to be noted that in contrary to many other AOP languages these markers are not part of the instrumentation, but are completely implemented on their own.\\
+\\
+There are two possible ways to implement this with the framework. The first one is doing exactly the same as is done now, but instead of an interface the markers would have to extend the marker pointcut. A problem with this approach is to keep the weaver informed of all these new markers, but that's a problem that can be overcome. Another way would be to create a very general marker pointcut that is able to fit every specified marker such that the parser can create a pointcut with the specified data. This would however cause a lot of problems as the pointcut would be to general making it hard to really suite the desires of the user. What the best solution is is hard to say as the paper does not provide a lot of information about how to specify your own marker.
+
+\section{Advice}
+Advice is expressed in the form of code snippets that are inlined, giving the developer fine-grained control over the inserted code. The snippets are written as regular Java static methods and annotations are used to indicate the type, either 'before' or 'after', and other properties such as the marker, guard and scope.\\
+\\
+Mainstream AOP languages support 'before', 'after' and 'around' advice, but since DiSL is meant for byte code analysis and thus not meant to modify any code, there is no use for the 'around' advice. For that reason DiSL only provides a 'before' and 'after' advice.\\
+\\
+Thanks to the inlining, snippets are able to efficiently communicate data through local variables defined in the instrumentation, it is also possible to communicate on thread level.\\
+\\
+A snippet can use both static and dynamic information, which are passed on as an argument, the only possible arguments. Once again it is possible for the user to specify own information by creating a class that implements a certain interface.\\
+\\
+An advice is pretty simple to implement as it is similar to what we did before. With implementation of the static and dynamic information we face the same problems as with implementing the pointcuts. The framework does not provide a separate mechanism for guards or scope and thus it is required that this information is added to the context of the pointcut.
+
+\section{Order}
+Order can be specified for each snippet as a non-negative integer number. The rule is that snippets with a higher order are closer to the join point then snippets with a lower order.\\
+\\
+The framework does not work with an order value, but instead requires a connection between the advices. This means that the compiler needs to convert these values into an explicit link between advices with consecutive order values.
+
+\section{Weaver}
+TODO: Add image and explain it a bit.
+
+The DiSL weaver runs on top of jBORAT, which will help us by parsing the classes from the source code.\\
+\\
+The process of weaving with DiSL goes as follows.
+\begin{enumerate}
+\item First DiSL parses all the instrumentation classes.
+\item When jBorat hands over a class to DiSL an internal representation for snippets, markers, guards, static contexts and argument processes is created
+\item Scopes are matched
+\item Join point shadows are created and evaluated by guards, and matching snippets are selected
+\item Static contexts are used to compute static information
+\item Argument processors are evaluated for snippets and matching snippets are selected
+\item Everything is woven together
+\item Static information and byte code to access dynamic information is added.
+\end{enumerate}
+
+
+\section{Examples}
+TODO: Fix layout!\\
+\\
+public class CallingContextBBAnalysis \{\\
+@ThreadLocal\\
+static CCTNode currentNode;\\
+\\
+@SyntheticLocal\\
+static CCTNode callerNode;\\
+\\
+@Before(marker = BodyMarker.class, order = 1)\\
+static void onMethodEntry(MethodStaticContext msc) \{\\
+if ((callerNode = currentNode) == null) \{\\
+callerNode = CCTNode.getRoot();\\
+\}\\
+currentNode = callerNode.profileCall(msc.thisMethodFullName());\\
+\}\\
+\\
+@After(marker = BodyMarker.class)\\
+static void onMethodcompletion() \{\\
+currentNode = callerNode;\\
+\}\\
+\\
+@Before(marker = BasicBlockMarker.class, order = 0)\\
+static void onBasicBlock(BasicBlockStaticContext bbsc) \{\\
+currentNode.profileBB(bbsc.getBBIndex());\\
+\}\\
+\}
+
+\section{Difficulties}
 
 
 \chapter{Discussion}
+As shown by the examples presented, the framework is general enough to be useful in a wide range of languages. The amount of work required to extend the framework depends on the complexity of the target language, and is mostly dominated by the effort required for the weaver. Thanks to the presence of 'helper' methods in the general Weaver, the work that has to be put into the weaver is limited to putting everything together and things as finding matches is done for us.\\
+\\
+The distinction between context and arguments is not always that clear, and since they both are just empty interfaces
+
 - To what extent are parts being reused? (or not)\\
 - How much coupling is there between the base language and the module?\\
 - How flexible is the model? What range of base languages can it handle?
+
 \chapter{Future Work}
 - Add the concept of 'Aspects', this will be similar to Objects in an OO language.\\
 - Add global variables, is this useful? We will need a general wrapper.\\
@@ -700,15 +802,7 @@ AspectMatlab orders the pointcuts implicitly, the designed framwork does not do 
 The context selectors add contexts to the pointcut or advice (DON'T UNDERSTAND! LOOK IT UP!!!) which can be done by using the context for PointcutRules.\\
 \\
 The designed framework does not provide a way to share information between advices, or even between the same advices that is run multiple times. To achieve this we have to rely on the options present in the base language. (LOOK UP: is there static stuff in matlab?!)
-\section{Conspects}
-TODO: REFERENCE!\\
-REREAD THIS, it doesn't make much sense!\\
-\\
-To be able to work with the framework we need to shift a lot of things, first we note that the contexts as presented in the paper can not be achieved. This is however not really a problem since they can be implemented as plain Java Classes.\\
-The idea of the event methods that are presented in the paper match what the framework considers a pointcut, there are however some differences. The framework does not allow code in pointcuts in contrary to event methods. The optional guard that can be added will result in a context for the pointcutrule.\\
-\\
-There seem to be an explicit invocation of events, this can not be done with the framework, and I need to look into this a bit more.\\
-There seem to be no real pointcuts, they are part of the advice. This will not be a problem for the framework.
+
 \section{DISL}
 The open joinpoint model can be implemented by having a general pointcut to represent a set of byte code instructions. It's up to the parser to detect these sets of byte code.\\
 \\
@@ -727,20 +821,6 @@ Also, the implicit order of appearance has to be made explicit to the weaver. Th
 The communication between snippets may be a problem.\\
 Static \& Dynamic information: try to hack it in -> We can just do this! (Or what is meant with this?)\\
 Guards \& Scope: add context to pointcuts (or part of pointcuts itself). It can be used as a guard if the pointcut has filled in information.
-\section{KALA}
-TPMonitor => Specify Outside of framework? => Communication?\\
-\\
-Actions of transaction depend on run-time. (TPMonitor guards this => determines what to do)\\
-Secundary transaction: requires check at run-time.\\
-\\
-KALA declaration = pointcut, no names are used (pointcut needs to have name -> add it while parsing).\\
-The extra properties declared inside it are the advice.\\
-Framework requires splitting them, but this can be done implicit by the parser.\\
-\\
-Framework doesn't care about content of advice, that's up to the parser. This makes nested blocks possible.\\
-\\
-Translating code to work with TPMonitor can be done.\\
-Using Reflex will become impossible, but the idea remains the same.\\
 
 \backpages
 \begin{appendices}
