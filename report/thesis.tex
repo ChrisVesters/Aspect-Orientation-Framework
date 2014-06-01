@@ -6,7 +6,7 @@
 \usepackage{multirow}
 \usepackage{mathtools}
 
-\title{A General Aspect Orientation Framework}
+\title{A General Framework For Aspect Oriented Programming}
 \author{Chris Vesters}
 \principaladviser{Dirk Janssens}
 \assistantadviser{Tim Molderez}
@@ -17,8 +17,8 @@
 % Make hyperref package use black links
 \hypersetup{
 	pdfauthor={Chris Vesters},
-	pdftitle={A General Aspect Orientation Framework},
-	pdfkeywords={Aspect Orientation, Framework},
+	pdftitle={A General Framework For Aspect Oriented Programming},
+	pdfkeywords={Aspect Oriented Programming, Framework},
     colorlinks,
     citecolor=black,
     filecolor=black,
@@ -704,7 +704,9 @@ An advice is pretty simple to implement as it is similar to what we did before. 
 \section{Order}
 Order can be specified for each snippet as a non-negative integer number. The rule is that snippets with a higher order are closer to the join point then snippets with a lower order.\\
 \\
-The framework does not work with an order value, but instead requires a connection between the advices. This means that the compiler needs to convert these values into an explicit link between advices with consecutive order values.
+The framework does not work with an order value, but instead requires a connection between the advices. This means that the compiler needs to convert these values into an explicit link between advices with consecutive order values.\\
+\\
+The implicit order of appearance between snippets with the same order value has to be made explicit to the weaver. The parser can do this by making an order while parsing where he states that the previous encountered one must occur before the next encountered.
 
 \section{Weaver}
 TODO: Add image and explain it a bit.
@@ -759,68 +761,30 @@ currentNode.profileBB(bbsc.getBBIndex());\\
 \chapter{Discussion}
 As shown by the examples presented, the framework is general enough to be useful in a wide range of languages. The amount of work required to extend the framework depends on the complexity of the target language, and is mostly dominated by the effort required for the weaver. Thanks to the presence of 'helper' methods in the general Weaver, the work that has to be put into the weaver is limited to putting everything together and things as finding matches is done for us.\\
 \\
-The distinction between context and arguments is not always that clear, and since they both are just empty interfaces
-
-- To what extent are parts being reused? (or not)\\
-- How much coupling is there between the base language and the module?\\
-- How flexible is the model? What range of base languages can it handle?
+In general we experience that the concept of pointcut and advice as it is captured by the framework provides a good basis to start from and the extensions that are required are very limited. The entire type system however, because it can not be provided by the framework may cause to be problematic. Though if handled well, it is possible to simply re-use the existing type system of the base language eliminating the cost of creating a complete new one.\\
+\\
+The poincutset which was meant as a way to simplify selecting multiple join point that could not be done by wildcards proves to be very useful, though it can require some new way of thinking since the only supported operator is the logical or. As most other AOP languages support other operators as well, this may seem to be a very limited way to express a set of pointcuts. Upon closer inspection this is often not the case, since for most join points it makes no sense to require that it should happen together with another join point. If we look at the some examples of AspectJ, we note that the '\&' is used with the \textbf{within} keyword. This however is not a join point and is therefore part of the context in the framework.\\
+\\
+The extended framework and the base language only interact by a compiler that extracts the join points from the source code and by the weaver that adds the advices in the right place. This is however not the only coupling between the base language and the framework, most components that are added to support AOP for the base language will carry some notion of the base language, being it implicitly. Another bit coupling between the framework and the base language is the type system which preferable is the same.
 
 \chapter{Future Work}
-- Add the concept of 'Aspects', this will be similar to Objects in an OO language.\\
-- Add global variables, is this useful? We will need a general wrapper.\\
-- It should be easier to use it on run-time.\\
-- Debugging isn't really possible -> keep links from the weaved to the original code.\\
-- Optimizing the weaving process, currently each change will require to completely re-weave all the code.\\
+The examples discussed here have shown some limitations of the framework. The most important one is the impossibility to communicate between advices. This could be solved by introducing global variables, which would be similar to arguments currently present for advice. The weaving step would have to be extended depending on the way the variables are weaved with the base language source code.\\
+\\
+Many other AOP languages have an explicit notion of aspect, this is not the case in this framework but could be considered as a valuable addition. Before doing so, it is essential that some questions are answered. Will the aspect only be used to encapsulate global variables, pointcuts and advices or will it be possible to use it like classes in an object oriented language? If that is the case then we gain some valuable features, such as the re-usability of pointcuts. However inheritance would also apply for advice, which means we need a way to select the right advice in case they are overridden. Another problem would be to choose between multiple subaspects, certainly since it may this choice may not be the same for the entire application, but can differ from join point to join point.\\
+\\
+Another problem with the current framework is the lack of choice between different ways of weaving. Though it is possible to weave the original files and the advice any way you want it is the time of weaving that lacks freedom, and the only real option is using the weaver as a pre-processor. This should be extended to provide more support for run-time weaving, since adding run-time checks isn't always feasible.\\
+\\
+Another important feature still missing is decent support for debugging, as this is completely left over to the compiler of the target language. This however means that all errors are reported based on the weaved code instead of the original source and aspect files. The easiest way to do this is to encapsulate the final compiler and intercept the errors, by keeping track of the weaved locations we can resolve the errors back to the original locations. This approach can not only be done for 'fixing' the reported errors, but could also be used to handle other tools that work on the weaved code.\\
+\\
+Currently the framework treats context and arguments in a different way, and is a context more equal to a type as they both define an interface with just an \textbf{isAssignable} method. We could ask ourselves in what way a context would be different from an argument, since in most cases a context variable will have a name and a value, just as an argument.\\
+\\
+Finally also the weaving process could be optimized to handle quick re-weaving. Currently the weaver starts from the original files every time the process is started. This requires a lot of time for large projects and a lot of weaved code will be the same as the previous, since often only small changes are made at a time. Adding involves adding links between the aspect and source code, which is also required to 'fix' the error messages mentioned earlier.
+
 \chapter{Related Work}
 - About building languages from modules in general .. or about building languages out of smaller languages (also called language composition)
+
 \chapter{Conclusion}
-
-\chapter{Temporary Stuff About Languages}
-It is impossible to keep on implementing more and more languages. Therefor I will discuss existing aspect oriented languages and how they could be implemented using the framework.
-\section{AOWP}
-
-
-TODO: REFERENCE!\\
-As mentioned in the paper, we need to provide a context to be able to handle coming from a certain page. This can be done by adding this information to the context of the pointcut and join point. The paper mentions different events the language can handle, if the language were to be made with the framework we would have to create a PoincutRule for each of these events (or divide them into groups!).\\
-\\
-The framework does not provide the '\&' or '!' operator, only the '|' is available by specifying multiple pointcutrules in one poincut. Though it is an inconvience, it is not a big problem since we can create an AndPointcutRule which simply takes two other pointcutrules and matches if both match. The same goes for the NotPointcutRule which will invert the result of a pointcutRule.\\
-\\
-In it's current form the framework does not provide run-time weaving. It is however to solve this problem in two different ways. The first is by adding extra code that checks the run-time information and makes a decision based on that. The second is by calling the weaver at run time.  By doing this the run-time information is available at the moment of weaving and can be used to specify pointcuts.\\
-\\
-Since the framework lets the user specify a languages as he likes, the same language can be used as in the paper as long as there is a compiler for it.
-
-\section{AspectMatlab}
-TODO: REFERENCE!\\
-To add extra information to the pointcuts as is done in the paper, we have to add members to the specific subclasses of the PointcutRule.\\
-\\
-Pointcuts are: call and execution of methods, get and set of arrays and a special loop pointcut. The within will not be part of the PointcutRule but will be provided as a context.\\
-\\
-The translation to matlab code can be done the same way with the framework as it was done in the paper.\\
-\\
-AspectMatlab orders the pointcuts implicitly, the designed framwork does not do this. This means that to maintain the implicit ordering caused by the order of appearance we need to add an explicit ordering to the pointcuts during parsing.\\
-\\
-The context selectors add contexts to the pointcut or advice (DON'T UNDERSTAND! LOOK IT UP!!!) which can be done by using the context for PointcutRules.\\
-\\
-The designed framework does not provide a way to share information between advices, or even between the same advices that is run multiple times. To achieve this we have to rely on the options present in the base language. (LOOK UP: is there static stuff in matlab?!)
-
-\section{DISL}
-The open joinpoint model can be implemented by having a general pointcut to represent a set of byte code instructions. It's up to the parser to detect these sets of byte code.\\
-\\
-Compatibility with Java and the Java virtual machine is in my opinion achievable since the framework is written in Java. If we look at the more general idea of compatibility we may encounter some problems that are hard to fix and require some workarounds.\\
-\\
-Access to context data can easily be provided by adding it to the join point and at the same time we can check on this data by setting it in the point cut as a kind of guard. Allowing the user to define its own context elements is harder. How we can do this is not clear, let me think about it.\\
-To add the dynamic information it is best to run the weaver at run time.\\
-\\
-Instrumentations map to advice.\\
-Markers map to pointcuts.\\
-To add custom markers the weaver needs to be able to detect them, how are we going to do this? Let me think about it.\\
-\\
-The order is based on numbers: these need to be turned into an partial order, but that's easy.\\
-Also, the implicit order of appearance has to be made explicit to the weaver. The parser can do this by making an order while parsing where he states that the previous encountered one must occur before the next encountered.\\
-\\
-The communication between snippets may be a problem.\\
-Static \& Dynamic information: try to hack it in -> We can just do this! (Or what is meant with this?)\\
-Guards \& Scope: add context to pointcuts (or part of pointcuts itself). It can be used as a guard if the pointcut has filled in information.
+Though the provided functionality of the framework is still somewhat limited, it is able to achieve abstracting the core elements of aspect oriented programming and has been successfully extended to prove its abilities, and its limitations. Despite the limitations of the current framework, it is often already possible to solve the problem in a different way. Yet adding new features and extensions will allow serving an even larger amount of languages and make the framework more user-friendly.
 
 \backpages
 \begin{appendices}
