@@ -33,16 +33,28 @@
 \phantomsection 
 \addcontentsline{toc}{chapter}{Nederlandstalige Samenvatting}
 \chapter*{Nederlandstalige Samenvatting}
+Aspect oriented programming languages worden momenteel vaak gebaseerd op een bestaande taal, waaraan dergelijke elementen worden toegevoegd. Deze extensie is vrij verregaand en vergt behoorlijk wat werk doordat ze altijd vanaf nul moet worden begonnen. Bovendien merken we op dat in de uiteindelijke taal vaak de basistaal en aspect oriented langauge gemengd zijn, waardoor hergebruik van de aspect elementen onmogelijk wordt.\\
+\\
+In deze thesis stellen we een framework voor dat de kernelementen van aspect oriented programming bevat volledig los van elke basistaal. De bedoeling van dit framework is om het mogelijk te maken om nieuwe en reeds bestaande talen te voorzien met aspect oriented programming. De grootste uitdaging is het vinden van een balans tussen de abstractie en het vereiste werk. Een framework dat niet abstract genoeg is, zal slechts in enkele gevallen bruikbaar zijn, terwijl een te abstract framework geen bijdrage levert tot het verminderen van het benodigde wrerk.\\
+\\
+De capaciteiten en gebreken worden aangetoond door middel van Small C en Dot te voorzien van aspect oriented programming. Omdat het op korte termijn onmoglijk is om voor meerdere verschillende talen het framework te testen, is gekozen om voor andere aspect oriented talen na te gaan hoe deze door gebruik te maken van het framework geimplementeerd zouden kunnen worden.\\
+\\
+De resultaten zijn afhankelijk van de beschikbare tools en de gewenste features, maar algemeen kan gesteld worden dat het framework in staat is om verschillende soorten talen te ondersteunen en dit veel sneller dan bij het beginnen vanaf nul.
 
 \clearpage 
 \phantomsection 
 \addcontentsline{toc}{chapter}{Acknowledgements}
 \chapter*{Acknowledgements}
-
+I would like to thank Tim Molderez for guiding me during the entire process and professor Janssens for making this thesis possible. I would also like to thank my family and friends for supporting me during the entire period, and pulling me through all the work. Lastly I would like to thank the creators of ANTLR and ObjectAid for the creation of this software which made my work a lot easier.
 \clearpage 
 \phantomsection 
 \addcontentsline{toc}{chapter}{Abstract}
 \chapter*{Abstract}
+Aspect oriented programming languages are often based on an existing base language to which aspect oriented elements are added. This extension is pretty invasive and takes a lot of work since it is done from scratch. We also not that the resulting language is mixed with the base language, making re-use of the aspect elements impossible.\\
+\\
+A framework is presented that contains all core elements of aspect oriented programming and is completely independent of any base language. The goal is to make it possible to extend the framework and provide new and existing languages with aspect oriented programming. The biggest challenge is the trade-off between the level of abstraction and the work required to extend it. A framework that does not sufficiently abstract from the base language can only be used for certain languages, while to much abstraction wouldn't add any value as the amount of work to extend it would be the same a starting from scratch.\\
+\\
+We show the functionality of the framework by using it on Small C and Dot. For other aspect oriented languages we examine how the same features could be provided by the framework.
 
 \mainbodypages
 
@@ -765,7 +777,9 @@ In general we experience that the concept of pointcut and advice as it is captur
 \\
 The poincutset which was meant as a way to simplify selecting multiple join point that could not be done by wildcards proves to be very useful, though it can require some new way of thinking since the only supported operator is the logical or. As most other AOP languages support other operators as well, this may seem to be a very limited way to express a set of pointcuts. Upon closer inspection this is often not the case, since for most join points it makes no sense to require that it should happen together with another join point. If we look at the some examples of AspectJ, we note that the '\&' is used with the \textbf{within} keyword. This however is not a join point and is therefore part of the context in the framework.\\
 \\
-The extended framework and the base language only interact by a compiler that extracts the join points from the source code and by the weaver that adds the advices in the right place. This is however not the only coupling between the base language and the framework, most components that are added to support AOP for the base language will carry some notion of the base language, being it implicitly. Another bit coupling between the framework and the base language is the type system which preferable is the same.
+The extended framework and the base language only interact by a compiler that extracts the join points from the source code and by the weaver that adds the advices in the right place. This is however not the only coupling between the base language and the framework, most components that are added to support AOP for the base language will carry some notion of the base language, being it implicitly. Another bit coupling between the framework and the base language is the type system which preferable is the same.\\
+\\
+Finally we note that modifying the parser for the base language to extract the join points can be quite cumbersome. One way to minimize the required effort would be to use an aspect oriented language and inject the modifications as advice. This way of working is however very limited and can only be done if there is a match between the join point model of the aspect oriented language and the interesting points in the parser. If we would for instance use AspectJ, we are limited to the beginning and end of method executions and calls. If the parser is not sufficiently organized it is impossible to add the code at the right place and the entire approach becomes useless.
 
 \chapter{Future Work}
 The examples discussed here have shown some limitations of the framework. The most important one is the impossibility to communicate between advices. This could be solved by introducing global variables, which would be similar to arguments currently present for advice. The weaving step would have to be extended depending on the way the variables are weaved with the base language source code.\\
@@ -781,17 +795,13 @@ Currently the framework treats context and arguments in a different way, and is 
 Finally also the weaving process could be optimized to handle quick re-weaving. Currently the weaver starts from the original files every time the process is started. This requires a lot of time for large projects and a lot of weaved code will be the same as the previous, since often only small changes are made at a time. Adding involves adding links between the aspect and source code, which is also required to 'fix' the error messages mentioned earlier.
 
 \chapter{Related Work}
-- About building languages from modules in general .. or about building languages out of smaller languages (also called language composition)
+Language Oriented Programming (TODO: ADD REFF) is similar in that way that it provides freedom to the user to create his own DSL, just like the framework allows a user to specify his own Aspect Oriented Language. This is realized by implementing loosely coupled languages which can be combined as requested. Pluggable AOP (TODO: ADD REFF) aims to specify aspect oriented languages largely independent of the base language, which would allow combining multiple AOL together.  Though the approach is different as they don't use a framework but a description of the AOL, both aim to get a loose coupling between the AOL and the base language. 
+
 
 \chapter{Conclusion}
 Though the provided functionality of the framework is still somewhat limited, it is able to achieve abstracting the core elements of aspect oriented programming and has been successfully extended to prove its abilities, and its limitations. Despite the limitations of the current framework, it is often already possible to solve the problem in a different way. Yet adding new features and extensions will allow serving an even larger amount of languages and make the framework more user-friendly.
 
 \backpages
-\begin{appendices}
-\chapter{An appendix}
-\label{chapt:appendix}
-
-\end{appendices}
 
 %\begin{thebibliography}{9}
 %\bibitem{Laddad10}
