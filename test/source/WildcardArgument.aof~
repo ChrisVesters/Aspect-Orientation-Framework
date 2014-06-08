@@ -1,7 +1,0 @@
-pointcut p() {
-	execute int ..Square(int);
-}
-
-advice a: before p() {
-	printf("Advice A\n");
-}

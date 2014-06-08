@@ -1,7 +1,0 @@
-pointcut n() {
-	start -> main [..];
-}
-
-advice fn: insert n() {
-	main [shape=box];
-}

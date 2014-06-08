@@ -1,7 +1,0 @@
-pointcut n() {
-	main [..];
-}
-
-advice fn: insert n() {
-	(main [..]) -> (exit [..]);
-}
