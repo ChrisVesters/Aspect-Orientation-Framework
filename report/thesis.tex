@@ -36,7 +36,7 @@
   title=\lstname
 }
 
-\title{A General Framework For Aspect Oriented Programming}
+\title{Towards A Framework For Creating Aspect Oriented Languages}
 \author{Chris Vesters}
 \principaladviser{Dirk Janssens}
 \assistantadviser{Tim Molderez}
@@ -90,33 +90,57 @@ We show the functionality of the framework by using it on Small C and Dot. For o
 
 \chapter{Introduction}
 \section{Aspect Oriented Programming}
-Aspect oriented programming (from now on referred to as AOP) is a way of programming that allows separating code beyond the capabilities of object oriented programming. It allows the separation of cross cutting concerns from the core concerns, by doing this we achieve more modular code, prevent code tangling and code scattering which results in code that is easier to maintain and modify.
+Aspect oriented programming (from now on referred to as AOP) is a way of programming that allows separating code beyond the capabilities of object oriented programming. It allows the separation of crosscutting concerns from the core concerns, by doing this we achieve more modular code, prevent code tangling and code scattering which results in code that is easier to maintain and modify. In figure \ref{fig:Code_Scattering} the calls to the security module are scattered across multiple modules, where they are tangled with the rest of the code.
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=0.5]{images/Code_Scattering.png}
-\caption{A representation of code scattering\cite{Laddad10}.}
+\caption{A representation of code scattering and code tangling.}
 \label{fig:Code_Scattering}
 \end{figure}\\
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.5]{images/Code_Tangling.png}
-\caption{A representation of code tangling\cite{Laddad10}.}
-\label{fig:Code_Tangling}
-\end{figure}\\
-AOP works by identifying join points, which is certain point in the execution of the program. The set of all the join points is called the join point model. It is at these join points that we can modify the original program execution. This change can go from something as simple as logging to something more invasive where the original code isn't even executed at all.\\
-A first thing we need is a way to indicate which join points we want to work on, this is done by a point cut. Now we can refer to certain join points we also need a way to modify the execution. This is done by an advice, note that there can be multiple kinds of advice.\\
+AOP works by identifying join points, which is certain point in the execution of the program like a method call or execution. The set of all the join points is called the join point model. It is at these join points that we can modify the original program execution. This change can go from something as simple as logging to something more invasive where the original code isn't even executed at all.\\
+To specify which join points we'd like to interact with, a pointcut is used. Besides reffering to a certain join point we also need a way to modify the execution of it. This is done by an advice, note that there can be multiple kinds of advice.\\
 In the end everything has to come together, this is done by the weaver.\\
 \\
-The most known AOP language by far is AspectJ, which is an extension of Java. To demonstrate the concept of AOP a couple of AspectJ examples are shown here:\\
-TODO: EXAMPLES!\\
+The most well-known AOP language is AspectJ, which is an extension of Java. To demonstrate the concept of AOP a couple of AspectJ examples are shown here. In the example \ref{lst:AspectJ_Authenticator} a pointcut is specified that will match any deliver method of the MessageCommunicator, no matter the arguments or return type. Before this method is executed the user is authenticated.
+\begin{lstlisting}[caption=An aspect to authenticate the user.,label=lst:AspectJ_Authenticator]
+package ajia.security;
+import ajia.messaging.MessageCommunicator;
+
+public aspect SecurityAspect {
+	private Authenticator authenticator = new Authenticator();
+
+	pointcut secureAccess(): execution(* MessageCommunicator.deliver(..));
+	
+	before() : secureAccess() {
+		System.out.println("Checking and authenticating user");
+		authenticator.authenticate();
+	}
+}
+\end{lstlisting}
+Another example \ref{lst:AspectJ_Profiler} determines the time required to execute any public method.
+\begin{lstlisting}[caption=An aspect to profile methods.,label=lst:AspectJ_Profiler]
+package ajia.profile;
+
+public aspect ProfilingAspect {
+	pointcut publicOperation() : execution(public * *.*(..));
+
+	Object around() : publicOperation() {
+		long start = System.nanoTime();
+		Object ret = proceed();
+		long end = System.nanoTime();
+		System.out.println(thisJoinPointStaticPart.getSignature() + " took " + (end-start) + " nanoseconds");
+		return ret;
+	}
+}
+\end{lstlisting}
 
 \section{Problem}
-Currently AOP is often implemented by extending an existing language, this often leads to completely new languages requiring new compilers and  breaking existing tools for the base language. Especially the latter is a reason why some people haven't made the step to start working with aspect oriented languages.\\
+Currently AOP is often implemented by extending an existing language, which often leads to completely new languages requiring new compilers and  breaking existing tools for the base language. Especially the latter is a reason why some people haven't made the step to start working with aspect oriented languages.\\
 \\
-Though the concepts of AOP are quite general, which is reflected by the similarities in different aspect oriented languages, all the AOP parts of these languages were written from scratch. The main reason for this is the absence of a general language independent library or framework to handle aspect orientation. Another reasons is that by building a language from scratch you get more freedom to implement the desired features.
+Though the concepts of AOP are quite general, which is reflected by the similarities in different aspect oriented languages, all the AOP parts of these languages were written from scratch. The main reason for this is the absence of a general language independent library or framework to handle aspect orientation. Another reason is that by building a language from scratch you get more freedom to implement the desired features.
 
 \section{Goal}
-The goal of this thesis is to build a framework that encloses all core ideas of AOP in an abstract manner without being specific about a particular base language. This will enable use to use the framework to develop an aspect oriented language quicker and easier than currently is the case by extending a couple of parts. The framework will work for completely new languages, and existing ones we want to extend. The latter one will pose the most problems as the freedom to adapt the compiler is very limited.
+The goal of this thesis is to build a framework that encloses all core ideas of AOP in an abstract manner without being specific about a particular base language. This should enable use to use the framework to develop an aspect oriented language quicker and easier than currently is the case by extending a couple of parts. The framework should be able to work for completely new languages, and existing ones we want to extend. The latter one will pose the most problems as the freedom to adapt the compiler is very limited.
 
 \chapter{Aspect Oriented Language Components}
 An aspect oriented language consists of several components, to explain these I will start from the base language and work my way up to get an aspect oriented language. At every point I'll make it more concrete with a small AspectJ example.\\
@@ -125,26 +149,75 @@ The starting point of creating an aspect oriented language is the base language,
 \\
 By defining the base language we implicitly defined a join point model. This is because the join point model consists of all the points that occur during execution on which intervention of the aspects is allowed. The join point model will always remain implicit, but it is an important part of any aspect oriented language as it is the link between the base language and the aspect oriented part.\\
 \\
-Knowing at which points we can intervene doesn't allow us to do anything, we need a way to identify certain points. This identification is done by using pointcuts, specifying one or more join points. They way in which pointcuts allow us to refer to join points should be as close as possible as the way in which they appear in the base language. If we look at an example of AspectJ (TODO: ADD), we clearly see the similarities.
+Knowing at which points we can intervene doesn't allow us to do anything, we need a way to identify certain points. This identification is done by using pointcuts, specifying one or more join points. They way in which pointcuts allow us to refer to join points should be as close as possible as the way in which they appear in the base language. Let us compare a pointcut declaration and the join point it refers to:
+\begin{minipage}{0.45\textwidth}
+\begin{lstlisting}[caption=Two method pointcuts.]
+\end{lstlisting}
+pointcut methodCall(): execution(public void Foo.bar(int));
+pointcut methodExec(): call(public void Foo.bar(int));
+\end{minipage}
+\begin{minipage}{0.45\textwidth}
+\begin{lstlisting}[caption=The join point shadow.]
+public class Foo {
+	void bar(int i) {
+		...
+	}
+}
+
+public class CallFoo {
+	void callbar() {
+		bar(5);
+	}
+}
+\end{lstlisting}
+\end{minipage}
 \\
-Now that we can refer to certain join points, we can actually start modifying the original code. This modification is encapsulated in an advice, which contains 'code' that has to be executed. When this 'code' is executed is defined by the pointcut with which the advice is associated. Whenever the program passes a join point that matches with the associated pointcut, this advice must be executed. The 'code' in the advice should be written in the base language to prevent the user from learning an entire new language. (TODO: EXAMPLE) The advice should also be able to have access to information about the join point, this information will be provided by the pointcut.\\
+Now that we can refer to certain join points, we can actually start modifying the original code. This modification is encapsulated in an advice, which contains 'code' that has to be executed. When this 'code' is executed is defined by the pointcut with which the advice is associated. Whenever the program passes a join point that matches with the associated pointcut, this advice must be executed. The 'code' in the advice should be written in the base language to prevent the user from learning an entire new language. The examples in listing \ref{lst:AspectJ_Authenticator} and \ref{lst:AspectJ_Profiler} clearly show that most part of the advice body consists of plain Java code. The advice should also be able to have access to information about the join point, this information will be provided by the pointcut.\\
 \\
-One problem that arises is: what is suppose to happen if we encounter a join point at which multiple advices are to be executed? This can be either caused by multiple pointcuts matching to the join point, or multiple advices being associated with the same pointcut. The latter case can be easily solved as we can combine the two advices into one bigger advice. The first is a bit more tricky since the one pointcut can also match other join points, different from the other, which means we can't just combine them. (TODO: illustrate) The solution to this is of course to introduce an ordering mechanism. This ordering can be either placed on the pointcuts or on the advices, in the first case we still need to make sure that there is only one advice for each pointcut though.\\
+One problem that arises is: what is suppose to happen if we encounter a join point at which multiple advice are to be executed? This can be either caused by multiple pointcuts matching to the join point, or multiple advice being associated with the same pointcut. The latter case can be easily solved as we can combine the two advice into one bigger advice. The first is a bit more tricky since the one pointcut can also match other join points, different from the other, which means we can't just combine them. Imagine the two pointcuts shown in listing \ref{lst:AspectJ_ConflictPointcut}, it is clear that they will both match a method call to 'foobar', but while the first also matches 'foo' the second will not. The other way around the second will match a method 'bar' but the first wont.
+\begin{lstlisting}[caption=Overlapping pointcuts.,label=lst:AspectJ_ConflictPointcut]
+pointcut fooCall(): call(public void *.foo*());
+pointcut barCall(): call(public void *.*bar());
+\end{lstlisting}
+The solution to this is of course to introduce an ordering mechanism. This ordering can be either placed on the pointcuts or on the advice, in the first case we still need to make sure that there is only one advice for each pointcut though.\\
 \\
-One final component we need, is something that will actually make sure that the advices are executed when the join points are encountered. The weaver will make this happen, and can do this in multiple ways. The easiest is compile-time, weaving which comes down to a pre-processing step, a more advanced form is run-time weaving, yet other forms are available depending on the base language. (TODO: EXAMPLE)\\
+One final component we need, is something that will actually make sure that the advice are executed when the join points are encountered. The weaver will make this happen, and can do this in multiple ways. The easiest is compile-time, weaving which comes down to a pre-processing step, a more advanced form is run-time weaving, yet other forms are available depending on the base language.\\
 \\
-With the components specified above we are perfectly possible to create an aspect oriented language, despite that we note that some features are still missing, as an example we note that communication between different advices is impossible. Since aspect orientation is often presented as an extension of object oriented programming it makes sense to introduce some form of class, called aspects. These aspects will contain the advices, which match functions and methods in object oriented languages, and can be extended to have members too. By doing this we immediately have can provide the advantages offered by object oriented languages among which are inheritance and encapsulation. (TODO: EXAMPLE)\\
-\\
-An overview of all the components and how they are linked together is shown in figure (TODO:REF). The weaver is not considered to be part of the aspect language just as a compiler is not considered a part of the language.
+With the components specified above we are perfectly possible to create an aspect oriented language, despite that we note that some features are still missing, as an example we note that communication between different advice is impossible. Since aspect orientation is often presented as an extension of object oriented programming it makes sense to introduce some form of class, called aspects. These aspects will contain the advice, which match functions and methods in object oriented languages, and can be extended to have members too. By doing this we immediately have the advantages offered by object oriented languages among which are re-usability, inheritance and encapsulation.
+\begin{lstlisting}[caption=Possibilities to reuse aspects.]
+public aspect ProgramPoints {
+	public pointcut main(): execution(public * *.*(..));
+	public pointcut expensive(): execution(* *.Calculator || *.Renderer).*(..));
+}
+
+public abstract aspect Profiling {
+	int count = 0;
+	abstract pointcut toProfile();
+	after(): toProfile() {
+		count++;
+	}
+}
+
+public aspect MyProfiling extends Profiling {
+	pointcut toProfile():
+	ProgramPoints.expensive();
+}
+\end{lstlisting}
+An overview of all the components and how they are linked together is shown in figure \ref{fig:Aspect_Components}. The weaver is not considered to be part of the aspect language just as a compiler is not considered a part of the language.
+\begin{figure}
+\includegraphics[scale=1]{images/AOF/Components.png}
+\caption{An overview of the components.}
+\label{fig:Aspect_Components}
+\end{figure}
 
 \chapter{Aspect Oriented Framework}
-Since the framework has the be easily extensible to work with any kind of language it has to be very abstract and may not contain any information about a base language. On the other hand, creating a framework that is too abstract and general requires too many additions to be made to implement it for a base language, making the framework completely missing its goal. The level of abstraction has to be well considered.\\
+Since the framework has to be easily extensible to work with any kind of language it has to be very abstract and may not contain any information about a base language. On the other hand, creating a framework that is too abstract may require more effort from the developer in order to instantiate the framework with a particular base language, making the framework completely missing its goal. The level of abstraction has to be well considered.\\
 \\
-I will first go into detail how the components that were identified in the previous chapter are represented and work in the framework. The explanation of the weaver is preceded by some information that is required to fully understand how the weaver works. This is followed by some remarks about the current version of the framework, and to conclude the chapter I explain how we can now expand this framework to work with any base language.\\
+Before going into detail how the components that were identified in the previous chapter are represented and work in the framework, I will provide some some information that is required to fully understand how the weaver works. Once all the components have been fully explained some remarks about the current version of the framework are made. To conclude the chapter I explain how we can now expand this framework to work with any base language.\\
 \\
-The first component of the aspect language that we identified were the pointcuts. This component is implemented as an abstract class Pointcut, to completely specify a join point we need some way to identify it's signature, this however is language specific and can therefore not be provided by the framework. Other common structures are arguments and context. The arguments are meant for information that can be used in the advice, while the context is a way to restrict matching join points based on  information that goes beyond the scope of the join point.\\
+The first component of the aspect language that we identified are pointcuts. This component is implemented as an abstract class Pointcut, to completely specify a join point we need some way to identify its signature, this however is language specific and can therefore not be provided by the framework. Other common structures are arguments and context. The arguments are meant for information that can be used in the advice, while the context is a way to restrict matching join points based on  information that goes beyond the scope of the join point.\\
 \\
-Something we notice, which is also the case for AspectJ, is that it is not possible to identify completely different join points with one pointcut. This complicates writing advice that has to be executed on these two different sets of join points. To simplify this we allow grouping pointcuts into sets, implemented as a PointcutSet as can be seen in figure \ref{fig:PointcutSet}, which has a set of pointcuts. Arguments that are available for the advice should be present in all the poincuts of the set and they should match names so we can link them from advice to this pointcut.
+In some cases we will be faced with an advice we will want to execute upon multiple join points that can not easily be described by one pointcut without also matching unwanted joinpoints. This can result in duplicating the advice, since every advice belongs to one pointcut, unless some other solution is provided. The solution the framework provides is to group those pointcuts into a set. This feature is implemented as a PointcutSet as can be seen in figure \ref{fig:PointcutSet}, which has a set of pointcuts. Arguments that are available for the advice should be present in all the poincuts of the set and they should match names so we can link them from advice to this pointcut.
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=0.7]{images/AOF/PointcutSet.jpg}
@@ -152,7 +225,7 @@ Something we notice, which is also the case for AspectJ, is that it is not possi
 \label{fig:PointcutSet}
 \end{figure}\\
 \\
-The advices are implemented by the abstract Advice class. This class has a name, which will make ordering them a lot easier, and a set of arguments, these arguments are the ones that can be used inside the advice body. Note that the arguments of the pointcut to which this advice is linked must be assignable to these arguments. The body or actual code of the advice is not provided by this class, simply because it depends on the base language as we want this to be in the same formalism. The UML diagram of the class is shown in figure \ref{fig:Advice}.
+The advice are implemented by the abstract Advice class. This class has a name, which will make ordering them a lot easier, and a set of arguments, these arguments are the ones that can be used inside the advice body. Note that the arguments of the pointcut to which this advice is linked must be assignable to these arguments. The body or actual code of the advice is not provided by this class, simply because it depends on the base language as we want this to be in the same formalism. The UML diagram of the class is shown in figure \ref{fig:Advice}.
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=0.7]{images/AOF/Advice.jpg}
@@ -174,17 +247,15 @@ Before going any further some more explanation about some already mentioned conc
 \label{fig:Type-Context}
 \end{figure}\\
 \\
-This being said we can now discuss the remaining components being: the order mechanism, the aspect and the weaver. The components will be handled in the order they are specified here.\\
-\\
-The framework does not provide a basis for the ordering. This means that the user is free to implement the way of specifying an ordering as he likes. The user is also free to choose whether the order will be specified on the pointcuts or on the advice. Despite the freedom on the ordering 'language' the ordering itself is still limited. This will be discussed into more detail once the weaver is introduced.\\
+We can now discuss the remaining components: the order mechanism, the aspect and the weaver. The user is free to implement the way of specifying an ordering as he likes, be it on the pointcuts or on the advice. Despite the freedom on the ordering 'language' the ordering itself is still limited. This will be discussed into more detail once the weaver is introduced.\\
 \\
 The current version of the framework does not provide any concept of 'aspects', though this causes some limitations, it does not make the framework useless. Some of the limitations were already mentioned in the previous chapter, more details about the consequences of the absence of an encapsulating aspect is discussed at the end of this chapter.\\
 \\
 Before discussing the weaver we have to make some things a bit clearer. You might be wondering how the join points will be extracted from the source code. This is done by the parser of the base language, or a modification of it. The join points that are generated by this parser will actually be instances of the Pointcut class. By doing this comparing whether a pointcut set contains a pointcut that matches the joinpoint becomes trivial.\\
 \\
-Something you might have noticed is that the advice does not keep a link to the pointcut itself, nor the other way around. The link between pointcut and advices is handled by the weaver, this allows a better separation between pointcuts and advices and gives the weaver more freedom to operate.\\
+Something worth noticing is that the advice does not keep a link to the pointcut itself, nor the other way around. The link between pointcut and advice is handled by the weaver, this allows a better separation between pointcuts and advice and gives the weaver more freedom to operate.\\
 \\
-The ordering mechanism requires some extra information as well, I mentioned earlier that despite the freedom some limitations still exist. This is cause by the way the weaver handles the ordering internally. The weaver will keep a list for every advice to its preceding advices. This means that the ordering provided to the weaver has to be on the advices, and should result in a partial ordering. To clarify things a small example is given. The partial ordering shown in figure \ref{fig:Order} can result into several orders among which:
+The ordering mechanism requires some extra information as well, I mentioned earlier that despite the freedom some limitations still exist. This is caused by the way the weaver handles the ordering internally. The weaver will keep a list for every advice to its preceding advice. This means that the ordering provided to the weaver has to be on the advice, and should result in a partial ordering. To clarify things a small example is given. The partial ordering shown in figure \ref{fig:Order} can result into several orders among which:
 \begin{itemize}
 \item A; B; C; D; E; F; G
 \item A; C; B; D; E; F; G
@@ -195,7 +266,7 @@ Which order is chosen is unpredictable, and it shouldn't matter as no order was 
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=0.6]{images/AOF/Order.png}
-\caption{A partial ordering of seven advices.}
+\caption{A partial ordering of seven advice.}
 \label{fig:Order}
 \end{figure}\\
 A final remark that has to be made is how the framework handles the argument mapping from adivce to pointcut and join point. For this the framework provides a Match class, shown in figure \ref{fig:Match}, that contains a dynamic value for each argument. We can use this match to get the join point specific value for an argument of the advice.
@@ -217,7 +288,7 @@ This brings us to the last component, the weaver. Just like most elements in the
 \caption{An overview of the flags available in the weaver.}
 \label{tab:Flags}
 \end{table}\\
-Besides that it also provides some methods that simplify processing the information. The most important one is 'executingAdvices', given a certain joinpoint this method will return all the advices that have to be executed in the order they are returned. In case the user needs to know the pointcuts that match a certain joinpoint a method 'enclosingPointcuts' is provided. The framework also implements a way to compare advices based on the partial ordering, this is done by the AdviceComparator which is an extension of the Comparator. This is meant for internal usage and the user should not need to use this since the return value of the 'executingAdvices' method is already ordered. A complete overview of the API is shown in figure \ref{fig:Weaver}
+The Weaver also provides some methods that simplify processing the information. The most important one is 'executingAdvices', given a certain joinpoint this method will return all the advice that have to be executed in the order they are returned. In case the user needs to know the pointcuts that match a certain joinpoint a method 'enclosingPointcuts' is provided. The framework also implements a way to compare advice based on the partial ordering, this is done by the AdviceComparator which is an extension of the Comparator. This is meant for internal usage and the user should not need to use this since the return value of the 'executingAdvices' method is already ordered. A complete overview of the API is shown in figure \ref{fig:Weaver}
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=0.7]{images/AOF/Weaver.jpg}
@@ -232,28 +303,28 @@ A complete overview of the framework and how everything is connected can be seen
 \caption{UML diagram of the entire framework.}
 \label{fig:FullView}
 \end{figure}
-Some trade offs had to be made when designing the framework, which I will now discuss into more detail.\\
+Some trade offs had to be made when designing the framework, which I will now discuss in more detail.\\
 \\
 First of all it needs to be noted that both Context and Type are interfaces which both specify only one method called 'isAssignable'. This means that Context and Type, though called different, do the same thing. We could use one general interface, this is not done though to be able to handle future evolution.\\
 \\
 Adding a notion of aspect would allow a lot of nice features such as adding members that can be used for communication between advice and inheritance. They could also be used as a way to encapsulate pointcuts and advice, though this can also be done without aspects simply by separating them over multiple files. Adding aspects to the framework would have introduced a lot of extra complexity. Since the goal of this thesis is to demonstrate the usability of such a framework I have chosen to not include this, but keep it as a future work.\\
 \\
-The framework uses an abstract notion of type, this is to achieve the level abstraction required to separate the framework from the base language. This however means that for each base language we need a new type system that implements the Type interface, which might result in a lot of work. Sometimes it is however possible to use the same type system the compiler of the base language uses if we can add the interface to it.\\
+The framework uses an abstract notion of type, this is to achieve the level of abstraction required to separate the framework from the base language. This however means that for each base language we need a new type system that implements the Type interface, which might result in a lot of work. Sometimes it is however possible to use the same type system the compiler of the base language uses if we can add the interface to it.\\
 \\
 The advice and pointcuts are not directly connected with each other, the connection is achieved by the weaver. Because adding an explicit link does not provide any advantages, I have chosen to do it this way to ensure that the components are as loosely coupled as possible. Nevertheless the framework demands that at the moment a pointcut is added the pointcut set it is linked with must be be known to the compiler.\\
 \\
-Something that was not discussed so far is what happens if a join point is encountered that is matched by multiple pointcuts in the same pointcut set. In this case there basically are two options: either we execute the advices for each matched pointcut, or we only select the first matched pointcut of the set. Currently the latter is implemented in the framework, mostly because if we still want the first to happen, we can simply split the pointcut set.\\
+Something that was not discussed so far is what happens if a join point is encountered that is matched by multiple pointcuts in the same pointcut set. In this case there basically are two options: either we execute the advice for each matched pointcut, or we only select the first matched pointcut of the set. Currently the latter is implemented in the framework, mostly because if we still want the first to happen, we can simply split the pointcut set.\\
 \\
-One final remark that has to be made is that implementing both join points and poincuts as the same Class can be dangerous since they are not the same. One example is that poincuts can contain wildcards wile join points should not. It may also be feasible to allow specifying types and sub-types in pointcuts, where in the join point the types are fixed and known. This means that we have to use the Poincut class carefully if we use it with a join point.\\
+One final remark that has to be made is that implementing both join points and poincuts as an instance of one class can be dangerous since they just aren't the same. One example is that poincuts can contain wildcards wile join points should not. It may also be feasible to allow specifying types and sub-types in pointcuts, where in the join point the types are fixed and known. This means that we have to use the Poincut class carefully if we use it with a join point.\\
 \\
-To conclude this chapter I will briefly explain how the framework can be expanded to work with a base language, for more detailed examples I refer to chapters \ref{chap:SmallC} and \ref{chap:Dot} where the framework is expanded for two different languages. Before being able to use the framework you have to specify a language in which it is possible to specify pointcuts, advice and optionally an order. You have to provide a parser for this language, which will create the pointcuts and advices which are handed over to the weaver. Due to the separation of the components it is possible to have separate languages for the pointcuts, advice and order, each with its own parser. In practice this will not be such an attractive option though since it involves a lot of extra work.\\
+To conclude this chapter I will briefly explain how the framework can be expanded to work with a base language, for more detailed examples I refer to chapters \ref{chap:SmallC} and \ref{chap:Dot} where the framework is expanded for two different languages. Before being able to use the framework you have to specify a language in which it is possible to specify pointcuts, advice and optionally an order. You have to provide a parser for this language, which will create the pointcuts and advice which are handed over to the weaver.\\
 \\
 The pointcuts and advice that has to be created has to be specific for the base language, this means that you first have to create a subclass of Advice and one or more subclasses for Pointcut.
 The advice subclass is simple, it must contain the body of the advice. The pointcuts need to contain all information to identify a join point. Since there will be multiple types of pointcuts you will have to implement one subclass for each type of pointcut. If you desire to add a context to the pointcut, you still have to create a class with the Context interface that contains all the context information you want to use.\\
 \\
-The pointcuts and advices of course require you to implement a type system. Depending on the availability of the type system used by the base language, and more precise the compiler, it is possible to add small modifications to get the type system without much work. If not, this might be a bigger problem.\\
+The pointcuts and advice of course require you to implement a type system. Depending on the availability of the type system used by the base language, and more precise the compiler, it is possible to add small modifications to get the type system without much work. If not, this might be a bigger problem.\\
 \\
-Now you can create pointcuts and advice you still need to expand the Weaver class to add the actual weaving. Since the framework gives you the advices to execute for each join point all the extended weaver has to do is execute these advices at those times. This sounds easier than it sometimes is, especially how you can interact with the base language is important. Eventually it all comes down to putting all the information in the weaver and generating the weaved code. A schematic overview of this is shown in figure \ref{fig:Weaving}, note that the aspect language is split up into three components. It is possible to have this explicit separation, but most of the time this will cause more work to implement and thus not be this explicit.
+Now you can create pointcuts and advice you still need to expand the Weaver class to add the actual weaving. Since the framework gives you the advice to execute for each join point all the extended weaver has to do is execute these advice at those times. This sounds easier than it sometimes is, especially how you can interact with the base language is important. Eventually it all comes down to putting all the information in the weaver and generating the weaved code. A schematic overview of this is shown in figure \ref{fig:Weaving}, note that the aspect language is split up into three components. It is possible to have this explicit separation, but most of the time this will cause more work to implement and thus not be this explicit.
 \begin{figure}
 \centering
 \includegraphics[scale=0.5]{images/AOF/weaving.png}
@@ -263,7 +334,7 @@ Now you can create pointcuts and advice you still need to expand the Weaver clas
 
 \chapter{Small C}
 \label{chap:SmallC}
-Small C is a subset of the C language, which makes it an procedural language. Though it does not support structs or including other files, it does give us a good overview of what aspect orientation in a procedural programming language is like. Besides this, the presences of a modifiable compiler made this language an interesting first step to test the framework.\\
+Small C is a subset of the procedural C language. Though it does not support structs or including other files, it does give us a good overview of what aspect orientation in a procedural programming language is like. As the source code of a compiler for this language was already available, this made Small C an interesting first step to test the framework.\\
 \\
 Despite the resemblance with C, I specify an example, listing \ref{lst:SmallC_Example}, to show the normal structure of a Small C program. This example will also be used later to demonstrate the functionality of the framework.
 
@@ -355,7 +426,7 @@ SPECIALCHARS ::= ('*' | '_')
 \end{lstlisting}
 
 \section{Pointcuts}
-The join points are mapped to pointcuts in a one-on-one manner. For each join point there exists a pointcut, being MethodPointcut and MemberPointcut. The different types are handled by adding a flag to the pointcut to indicate the type. Because identifying a method or a global variable is totally different we need to separate these two. But because a call and an execution both execute on a method we can combine these two together. This also holds for the get and set of a global variable.\\
+The type of join points are mapped to pointcuts in a one-on-one manner. For each join point there exists a pointcut, being MethodPointcut and MemberPointcut. The different types are handled by adding a flag to the pointcut to indicate the type. Because identifying a method or a global variable is totally different we need to separate these two. But because a call and an execution both execute on a method we can combine these two together. This also holds for the get and set of a global variable.\\
 \\
 To identify a method join point we need the signature of the method, consisting of the name of the method, the return type and a set of arguments. Note that the arguments are already implemented by the abstract super class, and thus are not part of the MethodPointcut class. An UML diagram for the MethodPointcut class is shown in figure \ref{fig:MethodPointcut}. Note that wildcards can be used in every element of the pointcut: in the name of the method, as a type of an argument, as  return type or as part of the argument list. It is not allowed to use a wildcard in the name of the arguments since these will be passed on to the advice to be used there, doing this wouldn't make any difference because the arguments are only matched on type and not on name. The names however are used to map them onto the arguments specified in the pointcutset. It is therefor also required that a pointcut contains all the arguments the enclosing pointcutset defines. An example of two method pointcuts are shown in listings \ref{lst:SmallC_MethodPointcutCall} and \ref{lst:SmallC_MethodPointcutExecute}, these pointcuts match respectively the calling and the execution of a method 'mySquare'.\\
 \begin{figure}
@@ -404,7 +475,7 @@ pointcut p() {
 The current implementation does not use the context of the framework, which limits usability. Yet I am convinced that adding a context would not add much functionality since the only context in Small C is the call hierarchy. Note that due to the lack of a context in the pointcuts the method call and execution pointcut will yield the same result, with a context we could for instance get the current method.
 
 \section{Advice}
-The advice of our aspect oriented version of Small C is very basic, it contains a string which represents Small C code. The code is allowed to contain arguments that are defined by the pointcutset it is linked to, but these are not treated specially in the CAdvice class itself. Besides the code, the CAdvice class also contains some timing information, as can be seen in figure \ref{fig:CAdvice}. This breaks the clear separation between pointcuts and advice and can be considered to be bad programming, yet this way we can create pointcutsets that are more re-usable. The different types, specifying the moment of execution, are before, after and around. These are the same as are present in AspectJ, and are pretty straightforward. Though while the before and after can only be used to add extra code, the around advice can be used to skip the original code, or modify the values of the parameters. The \textbf{proceed()} call can be used to jump to the original join point (or the next advice, if any). Join points getting or setting a global variable are seen as a typical getter or setter. Note that if the join point has a return type, either a method with a return type or a getter for a variable, the value will be returned by the \textbf{proceed()} call and it is the responsibility of the user to capture this.
+The advice of our aspect oriented version of Small C is very basic, it contains a string which represents Small C code. The code is allowed to contain arguments that are defined by the pointcutset it is linked to, but these are not treated specially in the CAdvice class itself. Besides the code, the CAdvice class also contains some timing information, in the form of a \textit{before} or \textit{after}, as can be seen in figure \ref{fig:CAdvice}. This breaks the clear separation between pointcuts and advice and can be considered to be bad programming, yet this way we can create pointcutsets that are more re-usable. The different types, specifying the moment of execution, are before, after and around. These are the same as are present in AspectJ, and are pretty straightforward. Though while the before and after can only be used to add extra code, the around advice can be used to skip the original code, or modify the values of the parameters. The \textbf{proceed()} call can be used to jump to the original join point (or the next advice, if any). Join points getting or setting a global variable are seen as a typical getter or setter. Note that if the join point has a return type, either a method with a return type or a getter for a variable, the value will be returned by the \textbf{proceed()} call and it is the responsibility of the user to capture this.
 \begin{figure}
 \centering
 \includegraphics[scale=0.7]{images/AOFC/CAdvice.jpg}
@@ -437,13 +508,13 @@ An advice needs to be linked with a pointcutset, this is done by referring to it
 The body of the advice is not parsed in any way, at the moment it is created. It is not even parsed anywhere in the entire process until the very end which is simply compiling the weaved code.
 
 \section{Order}
-There are two situations in which multiple advices can be mapped to the same moment in execution. The most obvious situation is when multiple advices are linked to the same pointcut set, but also if we have multiple pointcutsets that happen to match the same join point. In both cases it is possible that advices give rise to conflicts, but only if their types overlap.\\
+There are two situations in which multiple advice can be mapped to the same moment in execution. The most obvious situation is when multiple advice are linked to the same pointcut set, but also if we have multiple pointcutsets that happen to match the same join point. In both cases it is possible that advice give rise to conflicts, but only if their types overlap.\\
 \\
-First of all we will discuss the natural order of the advices. If there is no conflict the order is determined by the type of the advice, if there is a conflict but no order, it's up to the framework to resolve it. The location of the advices compared to the join point are shown in figure \ref{fig:COrder}. An overview of all the possible conflicts is more convienently shown in table \ref{tab:SmallC_Conflicts}.
+First of all we will discuss the natural order of the advice. If there is no conflict the order is determined by the type of the advice, if there is a conflict but no order, it's up to the framework to resolve it. The location of the advice compared to the join point are shown in figure \ref{fig:COrder}. An overview of all the possible conflicts is more convienently shown in table \ref{tab:SmallC_Conflicts}.
 \begin{figure}
 \centering
 \includegraphics[scale=0.7]{images/AOFC/Order.png}
-\caption{The location of the advices.}
+\caption{The location of the advice.}
 \label{fig:COrder}
 \end{figure}\\
 \begin{table}
@@ -461,7 +532,7 @@ around & + & + & +\\
 \caption{An overview of the possible conflicts.}
 \label{tab:SmallC_Conflicts}
 \end{table}\\
-To determine the order when conflicts do arise it is possible to specify an order between any two advices, even those that can never cause a conflict. This may seem useless, but it becomes useful in the case where you want more than two advice to be in a specific order and they are of different types. An order is specified as a list of advices, in which a later advice is closer to the join point then an earlier one. An example of specifying an order is shown in listing \ref{lst:SmallC_OrderExample} and listing \ref{lst:SmallC_OrderExampleResult}, in this example \textit{jp} is used to denote the join point. The order specified here compares a before and after advice but will have no effect as they can never cause a conflict. Note that it is possible to switch the before and after advice in the order and still get the same result.\\
+To determine the order when conflicts do arise it is possible to specify an order between any two advice, even those that can never cause a conflict. This may seem useless, but it becomes useful in the case where you want more than two advice to be in a specific order and they are of different types. An order is specified as a list of advice, in which a later advice is closer to the join point then an earlier one. An example of specifying an order is shown in listing \ref{lst:SmallC_OrderExample} and listing \ref{lst:SmallC_OrderExampleResult}, in this example \textit{jp} is used to denote the join point. The order specified here compares a before and after advice but will have no effect as they can never cause a conflict. Note that it is possible to switch the before and after advice in the order and still get the same result.\\
 \begin{minipage}{0.42\textwidth}
 \begin{lstlisting}[language=C, caption=An example of a non-trivial order, label=lst:SmallC_OrderExample]
 order{c; b; a}
@@ -492,7 +563,7 @@ printf("END C!\n");
 \end{minipage}\\
 
 \section{Weaver}
-The weaver is the biggest piece of code, after all it is the core part of every aspect oriented language. Once it has all the information it can start putting it together, it does this by writing wrapper methods for the join points, even if there is no advice to be execute for this join point. This last could have been omitted, but for simplicity it is not. Which wrappers are generated depends on the join point, and partly on the advices. For every global variable declared there will be two wrappers, one to handle the access to the variable, and another for the assignment of a new value. The same holds for a method but with call and execution instead. Two examples of these wrappers are shown in listing \ref{lst:SmallC_WrapperVariable} and \ref{lst:SmallC_WrapperMethod}. The original operations will be modified so that they use the wrappers instead. Two examples of these changes are shown in listing \ref{lst:SmallC_WrapperUsageBefore} and \ref{lst:SmallC_WrapperUsageAfter}.\\
+The weaver is the biggest piece of code, after all it is the core part of every aspect oriented language. Once it has all the information it can start putting it together, it does this by writing wrapper methods for the join points, even if there is no advice to be execute for this join point. This last could have been omitted, but for simplicity it is not. Which wrappers are generated depends on the join point, and partly on the advice. For every global variable declared there will be two wrappers, one to handle the access to the variable, and another for the assignment of a new value. The same holds for a method but with call and execution instead. Two examples of these wrappers are shown in listing \ref{lst:SmallC_WrapperVariable} and \ref{lst:SmallC_WrapperMethod}. The original operations will be modified so that they use the wrappers instead. Two examples of these changes are shown in listing \ref{lst:SmallC_WrapperUsageBefore} and \ref{lst:SmallC_WrapperUsageAfter}.\\
 \begin{minipage}{0.45\textwidth}
 \begin{lstlisting}[language=C, caption=Example of variable wrappers, label=lst:SmallC_WrapperVariable]
 int count_get_() {
@@ -535,7 +606,7 @@ count_set_(count_get_() + 1);
 x = mySquare_call_(count_get_());
 \end{lstlisting}
 \end{minipage}\\
-Besides these wrappers some other methods are generated as well. One for each advice of the type before or after, and one for each matching join point of an around advice. The reason the around advices needs multiple instances is that it will have to proceed to the original method. While this is not the case for the before and after advice, it is still much easier to put them in a separate method, especially if you consider that such an advice can alter the values of arguments, but that these changes may not be passed on to the actual method, only the around advice may do such things. The generated methods are those that are generated for the advice specified in listings \ref{lst:SmallC_BeforeAdvice}, \ref{lst:SmallC_AfterAdvice} and \ref{lst:SmallC_AroundAdvice}.\\
+Beside these wrappers some other methods are generated as well. One for each advice of the type before or after, and one for each matching join point of an around advice. The reason the around advice needs multiple instances is that it might have to proceed to the original method. While this is not the case for the before and after advice, it is still much easier to put them in a separate method, especially if you consider that such an advice can alter the values of arguments, but that these changes may not be passed on to the actual method, only the around advice may do such things. The generated methods are those that are generated for the advice specified in listings \ref{lst:SmallC_BeforeAdvice}, \ref{lst:SmallC_AfterAdvice} and \ref{lst:SmallC_AroundAdvice}.\\
 \begin{lstlisting}[language=C, caption=Generated methods, label=lst:SmallC_GeneratedMethods]
 void _a() {
 	printf("Advice A\n");
@@ -553,7 +624,7 @@ void _c_myMethod_() {
 	printf("END C!\n");
 }
 \end{lstlisting}
-Besides generating wrappers, the weaver is also responsible for delivering the right arguments to the advice, this is another situation that shows the advantages of putting an advice in a separate method. The around advice also contains a proceed() call, the weaver has to replace this with a call to the original method or next around advice. The arguments specified in the proceed must be conserved and passed on. To not complicate the weaver any further it is required that the user manages the declaration of a value to store the return result and explicitly returns this value if a return value is required. The declaration, assigning the return value of the proceed() and return the value all must occur separately. This is because it is possible that the weaver will insert calls to other advices before and after the proceed call. An example of this is shown in listing \ref{lst:SmallC_ComplexAround}, where the around advice is generated using the order as specified in listing \ref{lst:SmallC_OrderExample}.\\
+Besides generating wrappers, the weaver is also responsible for delivering the right arguments to the advice, this is another situation that shows the advantages of putting an advice in a separate method. The around advice also contains a proceed() call, the weaver has to replace this with a call to the original method or next around advice. The arguments specified in the proceed must be conserved and passed on. In order not to complicate the weaver any further it is required that the user manages the declaration of a value to store the return result and explicitly returns this value if a return value is required. The declaration, assigning the return value of the proceed() and return the value all must occur separately. This is because it is possible that the weaver will insert calls to other advice before and after the proceed call. An example of this is shown in listing \ref{lst:SmallC_ComplexAround}, where the around advice is generated using the order as specified in listing \ref{lst:SmallC_OrderExample}.\\
 \begin{lstlisting}[language=C, caption=A generated method for an around advice with advice nested within, label=lst:SmallC_ComplexAround]
 int _c_mySquare_(int a) {
 	int retVal = 0;
@@ -918,7 +989,7 @@ int mySquare_call_(int a) {
 \end{lstlisting}
 
 \section{Difficulties}
-Despite having a modifiable compiler, there were a lot of problems of weaving the advices into the code. This was caused by the fact that the compiler was not designed to allow changes after parsing the code. Changing this would require big changes in the compiler and was therefor not really an option. Instead of changing the compiler another alternative was used, by creating two compilers, both with small changes, we could weave the file in multiple passes.\\
+Despite having a modifiable compiler, there were a lot of problems of weaving the advice into the code. This was caused by the fact that the compiler was not designed to allow changes after parsing the code. Changing this would require big changes in the compiler and was therefor not really an option. Instead of changing the compiler another alternative was used, by creating two compilers, both with small changes, we could weave the file in multiple passes.\\
 \\
 In phase 1 the source code will be parsed and all join points will be specified to the weaver. The weaver will produce wrappers and add these to a temporary output file. In phase 2 the modified file will be parsed and the original calls will be modified to point to the wrappers. In phase 3 the actual advice bodies will be written to the wrappers. Phase 4 is to compile the weaved file with a regular compiler, this is not done by the weaver and has to be done by the user himself.\\
 \\
@@ -928,9 +999,9 @@ Adding the content can not be done before phase 2, simply because the content co
 
 \chapter{Dot}
 \label{chap:Dot}
-Dot is a language that allows you to easily specifies the structure and appearance of a graph. Some of the features the language supports  are directed edges, undirected edges, subgraphs, labels for nodes and edges, different shapes, colors and more. Despite that it is a pretty simple to use language, and has a very straightforward syntax it tends to be very verbose when trying to create large and complicated graphs.\\
+Dot is a language that allows you to easily specifies the structure and appearance of a graph. Some of the features the language supports  are directed edges, undirected edges, subgraphs, labels for nodes and edges, different shapes, colors and more. Despite the fact that the language is quite easy-to-use, and has a straightforward syntax, it tends to be very verbose when trying to create large and complicated graphs.\\
 \\
-Dot does not have any time related aspect as the result of the 'compiler' is the graph that the user wants. Because of this it adding AOP may seem weird since join points are defined as points in the execution of a program. Since the program does not execute, but is a static graph, all the join points simply map to points in the code in a static way. Yet the ideas of AOP can still be applied.\\
+It is important to note that, unlike a typical aspect-oriented language, Dot does not have any time related aspect as the result of the 'compiler' is the graph that the user wants. Because of this it adding AOP may seem somewhat strange since join points are defined as points in the execution of a program. Since the program does not execute, but is a static graph, all the join points simply map to points in the code in a static way. However, most ideas of AOP can still be applied.\\
 \\
 Because the syntax of Dot is that self-explaining, the example showed in listing \ref{lst:Dot_Example} and the resulting graph in figure \ref{fig:Dot_Example} is enough to get an understanding of the language.\\
 \begin{figure}
@@ -1015,9 +1086,21 @@ LETTER ::= ('a..z' | 'A..Z')
 \end{lstlisting}
 
 \section{Pointcuts}
-Every join point is expressed by a pointcut, resulting in three pointcuts being GraphPointcut, NodePointcut and EdgePointcut which represent respectively a graph, node and edge. All of these pointcuts can have Dot attributes, these will be stored as arguments and thus are part of the superclass Pointcut. But because each pointcut also has specific information I will now discuss these three pointcuts into more detail.\\
+There exist three pointcuts being GraphPointcut, NodePointcut and EdgePointcut which represent respectively a graph, node and edge. All of these pointcuts can have Dot attributes, these will be stored as arguments and thus are part of the superclass Pointcut. Because each pointcut also has specific information I will now discuss these three pointcuts into more detail.\\
 \\
-The GraphPointcut requires all the information of it's nodes and edges. Instead of introducing new types for nodes and edges, it is easier to reuse the pointcuts to represent this. A graph also has a name, though this information is not used in the current version.\\
+A NodePointcut is the easiest as it only has a name and attributes, and since attributes are already handled by the superclass all we need to do is add a name. A node matches a NodePointcut if it has the same name and all the attributes match. An example of such a node poincut is shown in listing \ref{fig:Dot_NodePointcut}.
+\begin{lstlisting}[caption=A node pointcut matching any node start, label=lst:Dot_NodePointcut]
+pointcut n() {
+	start [..];
+}
+\end{lstlisting}
+An EdgePointcut isn't that much harder, as the compiler relates every edge to a source and target node. These two nodes are again represented by a NodePointcut, as this was the easiest solution. On top of that we also need to know whether the edge is directed or not, which is a simple boolean. An edge matches an EdgePointcut if they are either both directed and the sources and targets match, if they are both undirected the source and target node may be switched. An example of an edge pointcut is shown in listing \ref{fig:Dot_EdgePointcut}.
+\begin{lstlisting}[caption=An edge pointcut matching any edge from start to main, label=lst:Dot_EdgePointcut]
+pointcut n() {
+	(start [..]) -> (main [..]) [..];
+}
+\end{lstlisting}
+The GraphPointcut requires all the information of its nodes and edges. Instead of introducing new types for nodes and edges, it is easier to reuse the pointcuts to represent this. A graph also has a name, though this information is not used in the current version.\\
 Checking whether a graph matches with a GraphPointcut is very simple, we just need to compare the nodes and edges it contains, which is discussed when we introduce these pointcuts and we need to verify that all the attributes are present and have the same value if any specified. A wildcard can be used to indicated that the graph may contain more nodes and edges, or that the attributes is just a subset. An example of a graph pointcut is shown in listing \ref{lst:Dot_GraphPointcut}.
 \begin{lstlisting}[caption=A graph pointcut matching any graph G with an edge from start to main, label=lst:Dot_GraphPointcut]
 pointcut n() {
@@ -1028,18 +1111,6 @@ pointcut n() {
 	}
 }
 \end{lstlisting}
-A NodePointcut is the easiest as it only has a name and attributes, and since attributes are already handled by the superclass all we need to do is add a name. A node matches a NodePointcut if it has the same name and all the attributes match. An example of such a node poincut is shown in listing \ref{fig:Dot_NodePointcut}.
-\begin{lstlisting}[caption=A node pointcut matching any node start, label=lst:Dot_NodePointcut]
-pointcut n() {
-	start [..];
-}
-\end{lstlisting}
-An EdgePointcut isn't that much harder, thanks to the compiler every edge contains exactly two nodes: a source and a target. These two nodes are again represented by a NodePointcut, as this was the easiest solution. On top of that we also need to know whether the edge is directed or not, which is a simple boolean. An edge matches a pointcut if they are either both directed and the sources and targets match, if they are both undirected the source and target node may be switched. An example of an edge pointcut is shown in listing \ref{fig:Dot_EdgePointcut}.
-\begin{lstlisting}[caption=An edge pointcut matching any edge from start to main, label=lst:Dot_EdgePointcut]
-pointcut n() {
-	(start [..]) -> (main [..]) [..];
-}
-\end{lstlisting}
 An overview of all the pointcuts and their interaction is shown in figure \ref{fig:DotPointcuts}.
 \begin{figure}
 \centering
@@ -1048,7 +1119,7 @@ An overview of all the pointcuts and their interaction is shown in figure \ref{f
 \label{fig:DotPointcuts}
 \end{figure}
 \\
-The current version does not use the context mechanism, but the user can specify that a form of context by wrapping it in a graph. By doing this, we can make a link between different elements in the same graph. I believe that this is also the only possible use for a context in Dot.\\
+The current version does not use the context mechanism, but the user can specify that a form of context by wrapping it in a graph. By doing this, we can make a link between different elements in the same graph.\\
 \\
 Parameters can be introduced on every level of the pointcut, this is shown by the examples in listing \ref{lst:Dot_Arguments}. Though the pointcut expresses the type of the argument, this is not really used by the weaver. As mentioned earlier it is the id of the elements that are used internally.
 \begin{lstlisting}[caption=Examples showing the use of arguments, label=lst:Dot_Arguments]
@@ -1070,7 +1141,7 @@ pointcut p(Edge i) {
 \end{lstlisting}
 
 \section{Advice}
-There exists two kinds of advice: insert and delete, which are meant to respectively insert elements or delete them from the pointcut. It is possible to add attributes to an element simply by creating an element that already exists. Modifying an attribute is done in the same way. Deleting an attribute is done by specifying an attribute next to the element, if no such attribute is specified the entire element id deleted. Using arguments is possible to specify the elements that were matched in the pointcut. To provide this functionality the DotAdvice is created, this contains the type of the advice and the body, being the elements that have to be inserted or deleted. These elements are expressed using the Pointcuts, this allows us to quickly re-use all the functionality for the pointcuts, among which the usage of parameters and wildcards. An example of an advice is shown in figure \ref{lst:Dot_Advice}.\\
+There are two kinds of advice: insert and delete, which are meant to respectively insert elements or delete them from the graph. It is possible to add attributes to an element simply by creating an element that already exists. Modifying an attribute is done in the same way. Deleting an attribute is done by specifying an attribute next to the element, if no such attribute is specified the entire element id deleted. Using arguments is possible to specify the elements that were matched in the pointcut. To provide this functionality the DotAdvice is created, this contains the type of the advice and the body, being the elements that have to be inserted or deleted. These elements are expressed using the Pointcuts, this allows us to quickly re-use all the functionality for the pointcuts, among which the usage of parameters and wildcards. An example of an advice is shown in figure \ref{lst:Dot_Advice}.\\
 \begin{figure}
 \centering
 \includegraphics[scale=0.6]{images/AOFDot/DotAdvice.jpg}
@@ -1097,7 +1168,7 @@ advice ie: insert n() {
 \end{lstlisting}
 
 \section{Order}
-Despite the absence of runtime behaviour it is still possible that conflicts arise if two advices modify the same element and the modifications overlap. Just think of an advice that colors a node red, and another that colors it blue. By changing the order of these two advices we either get a red node or a blue one. To specify an order, we simply create a point-comma separated list of the order in which they have to be executed. If there are two advices without an order that do execute at the same time, the order is undetermined. An example of the order is shown in listing \ref{lst:Dot_Order}.
+Despite the absence of runtime behaviour it is still possible that conflicts arise if two advice modify the same element and the modifications overlap. Consider an advice that colors a node red, and another that colors it blue. By changing the order of these two advice we either get a red node or a blue one. To specify an order, we simply create a semicolon separated list of the order in which they have to be executed. If there are two advice without an order that do execute at the same time, the order is undetermined. An example of the order is shown in listing \ref{lst:Dot_Order}.
 \begin{lstlisting}[caption=An example of the order., label=lst:Dot_Order]
 order{dn; fn}
 
@@ -1115,7 +1186,7 @@ advice fn: insert n(Node i) {
 \end{lstlisting}
 
 \section{Weaver}
-The weaver will first gather all advices and after that it will start executing them. This is important as it means that if one advice modifies an element in such a way that it no longer matches a pointcut any changes caused by advices liked to that pointcut will still be executed.\\
+The weaver will first gather all advice and after that it will start executing them. This is important as it means that if one advice modifies an element in such a way that it no longer matches a pointcut any changes caused by advice liked to that pointcut will still be executed.\\
 \\
 No other important notes are to be made. Thanks to the Dot compiler it is easy to get all the graphs, nodes and edges from a file modify them and write the resulting graph back to file.\\
 \begin{figure}
@@ -1194,14 +1265,14 @@ advice shape: insert end(Node n) {
 \end{figure}
 
 \section{Difficulties}
-The biggest problem encountered was how to decide on the syntax of the aspect language. Once this was done adding aspect orientated programming went really fast, also thanks to the compiler which allowed it to easily modify the graph and write it back to file.\\
+The biggest problem encountered was how to decide on the syntax of the aspect-oriented constructs in our extension of Dot. Once this was done adding aspect orientated programming went really fast, also thanks to the compiler which allowed it to easily modify the graph and write it back to file.\\
 \\
 One small problem was that there were two minor bugs in the compiler which needed to be fixed first, but this could be done really fast due to the availability of the source code.
 
 \chapter{AOWP}
-AOWP \cite{hokamura_aspect-oriented_2008} is a domain specific language for web applications. Most web applications are developed with the Model-View-Controller framework which clearly separates the application into business logic (model layer) and the visual component (view layer), which communicate through the controller. It is however this framework that makes general AOP languages unfeasible as they break this clear separation.\\
+AOWP \cite{hokamura_aspect-oriented_2008} is a domain specific language for web applications. Most web applications are developed with the Model-View-Controller framework which clearly separates the application into business logic (model layer) and the visual component (view layer), which communicate through the controller.\\
 \\
-Though there exists an AOP language for PHP called AOPHP, this language has some flaws. First of all there is a lack of pointcuts to really cover all join points of web applications. Secondly there is no way to handle a history of page visits without modifying the web pages. Finally we note that the aspects can not be sufficiently separated from the crosscutting concerns.
+Although there exists an AOP language for PHP called AOPHP, this language has some flaws. First of all there is a lack of pointcuts to really cover all join points of web applications. Secondly there is no way to handle a history of page visits without modifying the web pages. Finally we note that the aspects can not be sufficiently separated from the crosscutting concerns.
 
 \section{Join Point Model}
 The join points that can occur in a web application consists of events based on HTTP and language specifications of well-known Web programming languages such as PHP and Java/Servlet. Where the first consists of receiving HTTP requests, reading form data and reading or writing cookie data, the latter consists of reading the session data. An overview of all the events is shown in table \ref{tab:AOWP_Events}.
@@ -1234,10 +1305,10 @@ AOWP re-uses the syntax of web programming languages such as PHP and Java/Servle
 \\
 Creating an aspect can be done by creating a class that extends the Aspect class, adding a pointcut and an advice is done by declaring functions with the name of respectively 'pointcut' and the name of the type of advice ('before', 'after', 'around'). An example is shown in listing \ref{lst:AOWP_ExampleNews} and \ref{lst:AOWP_ExampleLoad}.\\
 \\
-This could also be accomplished if we were to use the framework, since it is required to create an aspect language of our own. This means that the same syntax could be chosen, though it has to be said that the framework has no notion of aspects, but this is not a problem as it is the responsibility of the compiler to extract the required information and provide it to the weaver in a format it understands.
+This could also be accomplished if we were to use our framework, since it is required to create an aspect language of our own. This means that the same syntax could be chosen, though it has to be said that the framework has no notion of aspects, but this is not a problem as it is the responsibility of the compiler to extract the required information and provide it to the weaver in a format it understands.
 
 \section{Pointcuts}
-There are three categories of pointcuts, a first one selects events, a second selects event flows and a third selects based on usage contexts. Each of these categories has a set of sub-types, or so called designators. An overview of all the designators are given in tables \ref{tab:Designators_AOWP_Events}, \ref{tab:Designators_AOWP_Flows} and \ref{tab:Designators_AOWP_Contexts}.
+There are three categories of pointcuts, a first one selects events, a second selects event flows and a third selects based on usage contexts. Each of these categories has a set of sub-types, or so-called designators. An overview of all the designators are given in tables \ref{tab:Designators_AOWP_Events}, \ref{tab:Designators_AOWP_Flows} and \ref{tab:Designators_AOWP_Contexts}.
 \begin{table}
 \centering
 \begin{tabular}{l|p{7cm}}
@@ -1317,9 +1388,9 @@ request(/*Action.php) & Selects the REQ whose name starts with '/' and ends with
 \end{table}
 From this table we also see that it is possible to use regular expressions as an argument of a designator.\\
 \\
-I will now discuss how these pointcuts could be implemented with the earlier presented framework. Instead of creating a pointcut subclass for each category it is more interesting to only create one subclasses being AOWPPointcut. I choose to take all the pointcuts together as their is no distinction in how these are represented. The class will rely on the arguments of the Pointcut superclass to implement the argument. The specific designator this instance represents has to be indicated by a special value, either an enum or an integer.\\
+I will now discuss how these pointcuts could be implemented with the earlier presented framework. Instead of creating a pointcut subclass for each category it is more interesting to only create one subclasses being AOWPPointcut. I choose to take all the pointcuts together as there is no distinction in how these are represented. The class will rely on the arguments of the Pointcut superclass to implement the argument. The specific designator this instance represents has to be indicated by a special value, either an enum or an integer.\\
 \\
-By doing this we can easily specify pointcuts, creating join points is however a bit more tricky due to capturing the flow. We could do this naivly and create a pointcut for each element along the flow, but that would cause a long delay. It is much better to capture the entire flow as a context and provide that along with the join point. This means that checking whether a pointcut matches a join point is a bit more work, but it allows us to generate only one instance for the entire join point.\\
+By doing this we can easily specify pointcuts, creating join points is however a bit more tricky due to capturing the flow. We could do this naively and create a pointcut for each element we encountered along the flow, but that would cause a long creation and comparison delay. It is much better to capture the entire flow as a context and provide that along with the join point. This means that checking whether a pointcut matches a join point is a bit more work, but it allows us to generate only one instance for the entire join point.\\
 \\
 AOWP allows combining multiple designators by using the negation (!), intersection (\&) and union ($|$) operator. This is not possible with the framework, since this only supports union. It is however not a big problems as we can create a new type of pointcut, the OperatorPointcut. This pointcut will simply execute a certain operator (!, \& or $|$) on its members, which are again pointcuts. Another approach could have been to use the union of the framework and using the OperatorPointcut only for the negation and intersection, but this would lead to some extra work to be done. We would have to rework some expressions to make the unions the top-level operator or remote them completely. This can be seen in the following examples. In these examples I use simple letters to represent pointcuts.\\
 \begin{align*}
@@ -1329,7 +1400,7 @@ AOWP allows combining multiple designators by using the negation (!), intersecti
 To avoid this extra work it makes more sense to treat the union the same way as the negation and the intersection.
 
 \section{Advice}
-The types of advice AOWP supports is the same as AspectJ, being 'before', 'after' and 'around'. The body of an advice is normal code. Because this is the same as Small C, which is explained earlier, I will not discuss this here again.
+The types of advice AOWP supports is the same as AspectJ, being 'before', 'after' and 'around'. The body of an advice is normal code with extension of the \textbf{proceed()} call. In contrary to AspectJ, there are no variables for the context, all this information is provided as arguments of the advice. Because this is the same as Small C, which is explained earlier, I will not discuss this here again.
 
 \section{Weaver}
 Due to the dynamic behaviour of web applications it is impossible to rely on compile time weaving, and thus run-time weaving is required. The weaver itself works pretty straightforward by extracting join point shadows and injects code to call the weaver.\\
@@ -1416,7 +1487,7 @@ loopbody & Captures the body of the loop.\\
 \caption{List of patterns.}
 \label{tab:Matlab_Patterns}
 \end{table}\\
-You can further restrict the scope of matching by using the withing pattern. On the other hand it is also possible to generalize pointcuts by using the wildcards '*' or '..', which can be used to match any function/variable or exactly one argument and one or more variables respectively.\\
+You can further restrict the scope of matching by using the within pattern. On the other hand it is also possible to generalize pointcuts by using the wildcards '*' or '..', which can be used to match any function/variable or exactly one argument and one or more variables respectively.\\
 \\
 Because of the Matlab syntax, where 'foo(1,2)' could either be a call to a function with arguments '1' and '2' or an array indexation, it is possible to create a general notation for calling a function or script and getting or setting a variable. A list of possible matching are given in table \ref{tab:Matlab_PatternExamples}.\\
 \begin{table}
@@ -1440,30 +1511,30 @@ call(*(*,..)) & Matches any call with two ore more arguments.\\
 You could think that if we were to implement these pointcuts with the new framework we would end up with three subclasses for Pointcut. It is however possible to group them all together into one since there is no clear distinction between a function call and getting a variable. The within would become part of the context provided to the pointcut.
 
 \section{Advice}
-AspectMatlab identifies three types of advice being before, around and after. The body of an advice is normal AspectMatlab code as can be seen in listing \ref{lst:Matlab_ExampleCalls}. Since the body of an advice is plain Matlab code this needs no futher explanation.\\
+AspectMatlab identifies three types of advice being before, around and after. The body of an advice is normal AspectMatlab code as can be seen in listing \ref{lst:Matlab_ExampleCalls}.\\
 \\
-As mentioned before, is it possible to provide context information to the advice. It is also possible to use variables specified within the aspect to communicate between advices or between multiple executions of the same advice. This latter one will cause the most problems as it is currently impossible to do anything like this with the framework. To provide it a work-around where we use static data in the original matlab code can be used. This is however bad coding and breaks the entire concept of aspect oriented programming.
+As mentioned before, is it possible to provide context information to the advice. It is also possible to use variables specified within the aspect to communicate between advice or between multiple executions of the same advice. This latter one will cause the most problems as it is currently impossible to do anything like this with the framework. To provide it a work-around where we use static data in the original matlab code can be used. This is however bad coding and breaks the entire concept of aspect oriented programming.
 
 \section{Order}
-AspectMatlab introduces a default ordering where the first encountered around advice becomes the outer most one, followed by the rest of the around advices in the order of appearance. After the around advices all the before advices are place in order of occurrence before the actual join point. The some holds for the after advices that are placed right after the join point in the order encountered before the around advices.\\
+AspectMatlab introduces a default ordering where the first encountered around advice becomes the outer most one, followed by the rest of the around advice in the order of appearance. After the around advice all the before advice are place in order of occurrence before the actual join point. The same holds for the after advice that are placed right after the join point in the order encountered before the around advice.\\
 \\
-Since the framework does not provide such a default order, it is required for the AspectMatlab compiler to explicity add such an order to the weaver. This isn't very complicated though, it suffices to remember the last encountered advice of each type (before, around and after) so that when we read a new one we can add create a link between these two advices and mark the stored one as a predecessor of the new one.\\
+Since the framework does not provide such a default order, it is required for the AspectMatlab compiler to explicity add such an order to the weaver. This isn't very complicated though, it suffices to remember the last encountered advice of each type (before, around and after) so that when we read a new one we can add create a link between these two advice and mark the stored one as a predecessor of the new one.\\
 \\
-This solves the order between advices of the same type, what still remains is the order between the different types. There are two different approaches to solve this:
+This solves the order between advice of the same type, what still remains is the order between the different types. There are two different approaches to solve this:
 \begin{enumerate}
 \item Create a link between the types.
 \item Handle the different types one by one in the weaver.
 \end{enumerate}
-The first approach may sound the best one, but at the same time it does some obsolete work, simply because when weaving we will have to treat every type of advice differently. Which means we could organize them during weaving according to their type.\\
+The first approach may sound like the best one, but at the same time it does some redundant work, simply because when weaving we will have to treat every type of advice differently. Which means we could organize them during weaving according to their type.\\
 \\
 If however it is still preferred to have an order between the different types, which is possible as it might be helpful with certain implementations, this isn't much work to be done.\\
 \\
-To make all the before advices happen after the last around, we need to store the first encountered before, since we need it at the end to define the last around advice as a predecessor of this first before advice. To make the last after advice happen before the last around advice, since this will be the deepest one and thus the first to be executed after the after, we need to define the last after advice as a predecessor of the last around advice. \\
+To execute all before advice after the last around advice, we need to store the first encountered before advice, since we need it at the end to define the last around advice as a predecessor of this first before advice. To make the last after advice happen before the last around advice, since this will be the deepest one and thus the first to be executed after the after, we need to define the last after advice as a predecessor of the last around advice. \\
 \\
 Because of the order behaviour caused by the around, which makes the order 'reflecting' over the join point, this leads to some confusing ordering and thus it can still not be used that straightforward.
 
 \section{Weaver}
-The AspectMatlab compiler (weaver) has been build using extensible toolkits, and aimed for a very clean and modular implementation. It takes a collection of Matlab and AspectMatlab source files as its input and produces a collection of woven Matlab source files. I will not discuss the entire process of how this is done, but a simple overview can be seen in figure \ref{fig:Matlab_Weaver}.\\
+The AspectMatlab compiler (weaver) has been built using extensible toolkits, and aimed for a very clean and modular implementation. It takes a collection of Matlab and AspectMatlab source files as its input and produces a collection of woven Matlab source files. I will not discuss the entire process of how this is done, but a simple overview can be seen in figure \ref{fig:Matlab_Weaver}.\\
 \begin{figure}
 \includegraphics[scale=1]{images/Languages/Matlab_Weaver.png}
 \caption{Overal structure of the amc AspectMatlab compiler.}
@@ -1486,7 +1557,7 @@ z = (AM_CVar_6 / AM_C_Var_8);
 \end{lstlisting}
 \end{minipage}
 \\
-It is also important to note that due to Matlab's semantics it is hard to determine at compile time the semantics of a expression. Because they wanted to minimize the amount of run-time checks, they introduced a name resolution analysis which adds extra information to the AST so they can determine the type.\\
+It is also important to note that due to Matlab's semantics it is hard to determine at compile time the semantics of an expression. Because they wanted to minimize the amount of run-time checks, they introduced a name resolution analysis which adds extra information to the AST so they can determine the type.\\
 \\
 Because the current weaver produces a source to source transformation of files, we could implement this the same way using the framework, without requiring any changes to the process.
 
@@ -1557,10 +1628,10 @@ DiSL \citep{marek_disl:_2012} is a domain specific language for bytecode instrum
 \item high-level programming model
 \item high efficiency
 \end{enumerate}
-Currently there exists low-level languages that meet the first and third goal, but these are based on byte code instrumentation, which makes it hard to develop, maintain and customize tools. Other AOP languages achieve the second goal but do not succeed in exposing important join points, easily provide access to information and mixing bytecode with aspect oriented code.
+Currently there exist low-level languages that meet the first and third goal, but these are based on byte code instrumentation, which makes it hard to develop, maintain and customize tools. Other AOP languages achieve the second goal but do not succeed in exposing important join points, easily provide access to information and mixing bytecode with aspect oriented code.
 
 \section{Join Point Model}
-To achieve a high level of expressiveness DiSL has an open join point model, which means that any region of byte code can be a join point.
+To achieve a high level of expressiveness DiSL has an open join point model, which means that any region of byte code can be a join point, provided with any kind of static and dynamic information.
 
 \section{Base Language Compiler}
 DiSL uses Java as its host language and uses annotations to express the functionality required. To parse the base language source code DiSL relies on jBORAT, a lightweight toolkit providing support for instrumentation with complete bytecode coverage.
@@ -1573,7 +1644,7 @@ I've already mentioned some remarks about the aspect language, such as that the 
 Two examples of DiSL are shown in listing \ref{lst:DiSL_ExampleProfiler} and \ref{lst:DiSL_ExampleSenseo}.
 
 \section{Pointcuts}
-To be able to handle the open join point model, DiSL provides an extensible library of markers. These markers are standard Java classes implementing a special interface for join point selection. It has to be noted that in contrary to many other AOP languages these markers are not part of the instrumentation, but are completely implemented on their own.\\
+To be able to handle the open join point model, DiSL provides an extensible library of markers/pointcuts. These markers are standard Java classes implementing a special interface for join point selection. It has to be noted that in contrary to many other AOP languages these markers are not part of the instrumentation, but are completely implemented on their own.\\
 \\
 There are two possible ways to implement this with the framework. The first one is doing exactly the same as is done now, but instead of an interface the markers would have to extend the marker pointcut. A problem with this approach is to keep the weaver informed of all these new markers, but that's a problem that can be overcome. Another way would be to create a very general marker pointcut that is able to fit every specified marker such that the parser can create a pointcut with the specified data. This would however cause a lot of problems as the pointcut would be to general making it hard to really suite the desires of the user. What the best solution is is hard to say as the paper does not provide a lot of information about how to specify your own marker.
 
@@ -1591,7 +1662,7 @@ An advice is pretty simple to implement as it is similar to what we did before. 
 \section{Order}
 Order can be specified for each snippet as a non-negative integer number. The rule is that snippets with a higher order are closer to the join point then snippets with a lower order.\\
 \\
-The framework does not work with an order value, but instead requires a connection between the advices. This means that the compiler needs to convert these values into an explicit link between advices with consecutive order values.\\
+The framework does not work with an order value, but instead requires a connection between the advice. This means that the compiler needs to convert these values into an explicit link between advice with consecutive order values.\\
 \\
 The implicit order of appearance between snippets with the same order value has to be made explicit to the weaver. The parser can do this by making an order while parsing where he states that the previous encountered one must occur before the next encountered.
 
@@ -1697,21 +1768,21 @@ DiSL is a language completely different from those discussed until now, despite 
 
 \chapter{Discussion}
 \label{chap:Discussion}
-As shown by the examples presented, the framework is general enough to be useful in a wide range of languages. The amount of work required to extend the framework depends on the complexity of the target language, and is mostly dominated by the effort required for the weaver. Thanks to the presence of 'helper' methods in the general Weaver, the work that has to be put into the weaver is limited to putting everything together and things as finding matches is done for us.\\
+As demonstrated by the languages presented and discussed in the previous chapters, the framework is general enough to be useful in a wide range of languages. The amount of work required to extend the framework depends on the complexity of the target language, and is mostly dominated by the effort required for the weaver. Thanks to the presence of 'helper' methods in the general Weaver, the work that has to be put into the weaver is limited to putting everything together and things as finding matches is done for us.\\
 \\
 In general we experience that the concept of pointcut and advice as it is captured by the framework provides a good basis to start from and the extensions that are required are very limited. The entire type system however, because it can not be provided by the framework may cause to be problematic. Though if handled well, it is possible to simply re-use the existing type system of the base language eliminating the cost of creating a complete new one.\\
 \\
 The poincutset which was meant as a way to simplify selecting multiple join point that could not be done by wildcards proves to be very useful, though it can require some new way of thinking since the only supported operator is the logical or. As most other AOP languages support other operators as well, this may seem to be a very limited way to express a set of pointcuts. Upon closer inspection this is often not the case, since for most join points it makes no sense to require that it should happen together with another join point. If we look at the some examples of AspectJ, we note that the '\&' is used with the \textbf{within} keyword. This however is not a join point and is therefore part of the context in the framework.\\
 \\
-The extended framework and the base language only interact by a compiler that extracts the join points from the source code and by the weaver that adds the advices in the right place. This is however not the only coupling between the base language and the framework, most components that are added to support AOP for the base language will carry some notion of the base language, being it implicitly. Another bit coupling between the framework and the base language is the type system which preferable is the same.\\
+The extended framework and the base language only interact by a compiler that extracts the join points from the source code and by the weaver that adds the advice in the right place. This is however not the only coupling between the base language and the framework, most components that are added to support AOP for the base language will carry some notion of the base language, being it implicitly. Another bit coupling between the framework and the base language is the type system which preferable is the same.\\
 \\
 Finally we note that modifying the parser for the base language to extract the join points can be quite cumbersome. One way to minimize the required effort would be to use an aspect oriented language and inject the modifications as advice. This way of working is however very limited and can only be done if there is a match between the join point model of the aspect oriented language and the interesting points in the parser. If we would for instance use AspectJ, we are limited to the beginning and end of method executions and calls. If the parser is not sufficiently organized it is impossible to add the code at the right place and the entire approach becomes useless.
 
 \chapter{Future Work}
 \label{chap:FutureWork}
-The examples discussed here have shown some limitations of the framework. The most important one is the impossibility to communicate between advices. This could be solved by introducing global variables, which would be similar to arguments currently present for advice. The weaving step would have to be extended depending on the way the variables are weaved with the base language source code.\\
+The languages discussed in this thesis have shown some limitations of the framework. The most important one is the lack of communication between advice. This could be solved by introducing global variables, which would be similar to arguments currently present for advice. The weaving step would have to be extended depending on the way the variables are weaved with the base language source code.\\
 \\
-Many other AOP languages have an explicit notion of aspect, this is not the case in this framework but could be considered as a valuable addition. Before doing so, it is essential that some questions are answered. Will the aspect only be used to encapsulate global variables, pointcuts and advices or will it be possible to use it like classes in an object oriented language? If that is the case then we gain some valuable features, such as the re-usability of pointcuts. However inheritance would also apply for advice, which means we need a way to select the right advice in case they are overridden. Another problem would be to choose between multiple subaspects, certainly since it may this choice may not be the same for the entire application, but can differ from join point to join point.\\
+Many other AOP languages have an explicit notion of aspect, this is not the case in this framework but could be considered as a valuable addition. Before doing so, it is essential that some questions are answered. Will the aspect only be used to encapsulate variables, pointcuts and advice or will it be possible to use it like classes in an object oriented language? If that is the case then we gain some valuable features, such as the re-usability of pointcuts. However inheritance would also apply for advice, which means we need a way to select the right advice in case they are overridden. Another problem would be to choose between multiple subaspects, certainly since it may this choice may not be the same for the entire application, but can differ from join point to join point.\\
 \\
 Another problem with the current framework is the lack of choice between different ways of weaving. Though it is possible to weave the original files and the advice any way you want it is the time of weaving that lacks freedom, and the only real option is using the weaver as a pre-processor. This should be extended to provide more support for run-time weaving, since adding run-time checks isn't always feasible.\\
 \\
